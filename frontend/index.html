@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>毕业设计管理系统原型</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        const userRole = localStorage.getItem("userRole") || "admin";
+    </script>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="sidebar">
+        <h2 class="app-title">毕设管理系统</h2>
+        <h2 class="nav-group-title">功能模块</h2>
+        <ul id="main-nav-list" class="nav-list">
+            <li class="nav-item" data-target="module1.html">1. 课题申报</li>
+            <li class="nav-item" data-target="module2.html">2. 选题确认</li>
+            <li class="nav-item" data-target="module3.html">3. 任务书发布</li>
+            <li class="nav-item" data-target="module4.html">4. 开题答辩</li>
+            <li class="nav-item" data-target="module5.html">5. 指导记录</li>
+            <li class="nav-item" data-target="module6.html">6. 中期检查</li>
+            <li class="nav-item" data-target="module7.html">7. 论文管理</li>
+            <li class="nav-item" data-target="module8.html">8. 毕业答辩</li>
+            <li class="nav-item" data-target="module9.html">9. 成绩管理</li>
+            <li class="nav-item" data-target="module10.html">10. 归档管理</li>
+        </ul>
+    </div>
+
+    <div class="user-info" style="grid-column: 2 / 3; display: flex; justify-content: flex-end; align-items: center; padding: 0 32px; background: white; border-bottom: 1px solid var(--color-border);">
+        <label for="role-selector" style="margin-right: 10px; font-size: 13px; color: var(--color-text-secondary);">当前用户身份：</label>
+        <select id="role-selector" style="font-size: 13px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--color-border); margin-right: 15px;">
+            <option value="student">学生</option>
+            <option value="teacher">教师</option>
+            <option value="admin" selected>教务处</option>
+        </select>
+        <div class="user-avatar">屠</div>
+    </div>
+
+
+    <div class="content">
+
+        <div id="module1" class="module-content">
+            <h1>课题申报管理</h1>
+
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 25px;">
+                <div>
+                    <span style="font-size: 16px; color: var(--color-text-secondary);">申报窗口期截止：</span>
+                    <strong style="font-size: 20px; color: var(--color-danger-text);">2025-12-31</strong>
+                    <span style="font-size: 14px; margin-left: 10px; color: var(--color-danger-text);">(剩余 42 天)</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 16px; color: var(--color-text-secondary);">已申报数量（上限）：</span>
+                    <strong style="font-size: 30px; color: var(--color-primary);">3</strong> 
+                    <span style="font-size: 18px; color: var(--color-text-secondary);">/ 8</span>
+                    <button class="btn btn-secondary" style="margin-left: 20px;" onclick="showAlert('提示：申报数量已达到上限，无法新增。')">数量上限提示</button>
+                </div>
+            </div>
+            
+            <div class="card" data-role="student">
+                <div class="card-header">申请表管理</div>
+                <div style="margin-bottom: 20px;" data-role="student">
+                    <p style="color: var(--color-text-secondary);">请下载模板填写并上传。</p>
+                    <input type="file" style="margin-bottom: 10px;">
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="showAlert('提交申请表')" data-role="student">提交</button>
+                    <button class="btn btn-secondary" onclick="showAlert('导出申请表')">导出申请表</button>
+                    <button class="btn btn-secondary" onclick="showAlert('打印申请表')">打印申请表</button>
+                </div>
+            </div>
+
+            <div class="card" data-role="teacher,admin">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <button class="btn btn-primary" onclick="showAlert('打开 [新增课题] 表单')">
+                            <span style="margin-right: 5px;">+</span> 新增题目
+                        </button>
+                        <button class="btn btn-secondary" onclick="showAlert('对选中题目进行批量删除')">批量删除</button>
+                        <button class="btn btn-secondary" onclick="showAlert('打印课题申报表')">打印/导出</button>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" placeholder="搜索题目名称" style="width: 200px;">
+                        
+                        <select style="width: 150px;">
+                            <option>筛选: 全部状态</option>
+                            <option>状态: 已通过</option>
+                            <option>状态: 待审核</option>
+                            <option>状态: 已退回</option>
+                        </select>
+                        
+                        <button class="btn btn-primary">筛选/确认</button>
+                    </div>
+                </div>
+
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;"><input type="checkbox" onchange="showAlert('全选/全不选')"></th>
+                            <th style="width: 35%;">课题名称</th>
+                            <th style="width: 15%;">申报时间</th>
+                            <th style="width: 15%;">状态</th>
+                            <th style="width: 30%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>基于深度学习的图像识别系统研究</td>
+                            <td>2025-10-01</td>
+                            <td><span class="status-pill status-success">已通过</span></td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="showAlert('查看课题详情')">查看详情</button>
+                                <button class="btn btn-secondary" disabled>修改</button>
+                                <button class="btn btn-secondary" style="color: var(--color-danger-text);" disabled>删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>分布式任务调度系统的设计与实现</td>
+                            <td>2025-10-05</td>
+                            <td><span class="status-pill status-pending">待审核</span></td>
+                            <td>
+                                <button class="btn btn-secondary">查看详情</button>
+                                <button class="btn btn-primary">修改</button>
+                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">删除</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>智能家居安全网关的漏洞分析</td>
+                            <td>2025-10-10</td>
+                            <td><span class="status-pill status-rejected">已退回</span></td>
+                            <td>
+                                <button class="btn btn-secondary">查看详情</button>
+                                <button class="btn btn-primary">重新修改/提交</button>
+                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">删除</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px; text-align: center; color: var(--color-text-secondary);">
+                    <span>共 3 条记录 | 第 1 / 1 页</span>
+                    <button class="btn btn-secondary" disabled>上一页</button>
+                    <button class="btn btn-secondary" disabled>下一页</button>
+                </div>
+
+                <div style="margin-top: 25px; text-align: right; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                    <button class="btn btn-primary btn-large" style="padding: 10px 30px;" onclick="showAlert('申报表已成功提交到教科办，提交后不可修改！')" data-role="teacher">
+                        提交申报表到教科办
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="module2" class="module-content">
+            <h1 data-role="student,teacher">选题确认</h1>
+            
+            <div class="card" data-role="student,teacher">
+                <p style="font-size: 16px; font-weight: 500;">选题截止日期: <strong style="color: var(--color-danger-text);">2026-05-08</strong></p>
+            </div>
+
+            <div class="card" data-role="student,teacher">
+                <div class="card-header">选题流程进度</div>
+                <div class="progress-steps">
+                    <div class="step-item active">
+                        <div class="step-dot">1</div>
+                        <span class="step-label">学生志愿提交</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot">2</div>
+                        <span class="step-label">指导教师审核</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot">3</div>
+                        <span class="step-label">教科办锁定</span>
+                    </div>
+                </div>
+                <blockquote style="font-size: 13px; color: var(--color-text-secondary);">
+                    当前阶段：教科办将对师生双向选择结果进行最终确认与锁定。
+                </blockquote>
+            </div>
+
+
+            <div data-role="student">
+                <div class="card">
+                    <div class="card-header">已提交的志愿信息</div>
+                    <div class="topic-card">
+                        <div class="topic-details">
+                            <p><strong>[KB133086] 基于C#实现的数据库安全系统</strong></p>
+                            <p>剩余可选名额: 0 | 指导教师: 李教授 | 状态: <span class="status-pill status-rejected">已满额</span></p>
+                        </div>
+                        <div class="topic-actions">
+                            <span class="topic-status">已锁定</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>可选课题列表</span>
+                        <div>
+                            <input type="text" placeholder="可输入课题号/教师姓名/关键词搜索" style="width: 250px;">
+                            <button class="btn btn-primary">搜索</button>
+                        </div>
+                    </div>
+                    
+                    <div class="topic-card">
+                        <div class="topic-details">
+                            <p><strong>[KB133086] 车辆故障检测系统</strong></p>
+                            <p>剩余可选名额: 3 | 指导教师: 张教授 | 状态: <span class="status-pill status-success">可申请</span></p>
+                        </div>
+                        <div class="topic-actions">
+                            <button class="btn btn-primary">申请</button>
+                        </div>
+                    </div>
+                    <div class="topic-card">
+                        <div class="topic-details">
+                            <p><strong>[KB133087] 智能家居控制系统</strong></p>
+                            <p>剩余可选名额: 1 | 指导教师: 王教授 | 状态: <span class="status-pill status-success">可申请</span></p>
+                        </div>
+                        <div class="topic-actions">
+                            <button class="btn btn-primary">申请</button>
+                        </div>
+                    </div>
+                    <div class="topic-card">
+                        <div class="topic-details">
+                            <p><strong>[KB133088] 基于C#实现的数据库安全系统</strong></p>
+                            <p>剩余可选名额: 0 | 指导教师: 李教授 | 状态: <span class="status-pill status-rejected">已满额</span></p>
+                        </div>
+                        <div class="topic-actions">
+                            <span class="topic-status">已申请</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; text-align: right;">
+                        <button class="btn btn-primary">申请志愿</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div style="display: grid; grid-template-columns: 1fr 3fr; gap: 30px;" data-role="teacher">
+                <div class="card" style="height: fit-content;">
+                    <div class="card-header">指导人数统计</div>
+                    <p style="font-size: 28px; font-weight: 700; color: var(--color-primary); margin: 5px 0 0;">3 / 8</p>
+                    <p style="color: var(--color-text-secondary); margin: 0;">已锁定学生人数/上限</p>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-header" style="display: flex; justify-content: space-between;">
+                            <span>待处理的选题申请 (<span style="color: var(--color-danger-text); font-weight: 700;">2</span> 条)</span>
+                            <input type="text" placeholder="搜索学生姓名/学号" style="width: 150px; margin-top: -5px;">
+                        </div>
+                        <table class="apple-table">
+                            <thead>
+                                <tr>
+                                    <th>学生姓名</th>
+                                    <th>学号</th>
+                                    <th>申请课题</th>
+                                    <th>申请时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>张三</td>
+                                    <td>202101001</td>
+                                    <td>基于深度学习的图像识别系统研究</td>
+                                    <td>2025-12-15</td>
+                                    <td>
+                                        <button class="btn btn-primary">接收</button>
+                                        <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>李四</td>
+                                    <td>202101002</td>
+                                    <td>分布式任务调度系统的设计与实现</td>
+                                    <td>2025-12-16</td>
+                                    <td>
+                                        <button class="btn btn-primary">接收</button>
+                                        <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div style="margin-top: 20px; text-align: right;" data-role="admin">
+                            <button class="btn btn-primary">批量通过</button>
+                            <button class="btn btn-secondary" style="color: var(--color-danger-text);">批量不通过</button>
+                            <button class="btn btn-secondary">选题名单导出</button>
+                            <button class="btn btn-secondary">选题名单打印</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">已锁定学生列表 (3 名)</div>
+                        <table class="apple-table">
+                            <thead>
+                                <tr>
+                                    <th>学生姓名</th>
+                                    <th>学号</th>
+                                    <th>配对课题</th>
+                                    <th>锁定时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>王五</td><td>202101003</td><td>智能家居安全网关的漏洞分析</td><td>2025-12-10</td></tr>
+                                <tr><td>赵六</td><td>202101004</td><td>XXX课题</td><td>2025-12-11</td></tr>
+                                <tr><td>钱七</td><td>202101005</td><td>YYY课题</td><td>2025-12-12</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 教务处视图 (新增，符合图片效果) -->
+            <div data-role="admin" style="margin-top: 40px;">
+                <h1 style="margin-bottom: 20px; font-size: 24px;">选题确认（教科办）</h1>
+                
+                <!-- 进度条卡片 -->
+                <div class="card" style="padding: 30px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 0 50px;">
+                        <!-- 步骤1 -->
+                        <div style="display: flex; align-items: center; color: var(--color-primary);">
+                            <span style="font-weight: 600; margin-right: 10px;">1. 学生志愿提交</span>
+                            <div style="height: 4px; width: 150px; background-color: var(--color-primary); border-radius: 2px;"></div>
+                        </div>
+                        <!-- 步骤2 -->
+                        <div style="display: flex; align-items: center; color: var(--color-primary);">
+                            <span style="font-weight: 600; margin-right: 10px;">2. 指导教师审核</span>
+                            <div style="height: 4px; width: 150px; background-color: var(--color-primary); border-radius: 2px;"></div>
+                        </div>
+                        <!-- 步骤3 -->
+                        <div style="display: flex; align-items: center; color: var(--color-text-secondary);">
+                            <span style="margin-right: 10px;">3. 教科办锁定</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 20px;">当前阶段：教科办对师生双向选择结果进行最终确认与锁定。</p>
+                </div>
+
+                <!-- 搜索卡片 -->
+                <div class="card" style="padding: 20px;">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" placeholder="请输入选题号 / 选题名称 / 教师姓名查询" style="width: 400px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 4px;">
+                        <button class="btn btn-primary">搜索</button>
+                        <button class="btn btn-secondary">重置</button>
+                    </div>
+                </div>
+
+                <!-- 列表卡片 -->
+                <div class="card">
+                    <!-- 课题信息头 -->
+                    <div style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; margin-bottom: 15px; display: flex; justify-content: space-between; font-size: 14px; align-items: center;">
+                        <div>
+                            <span style="color: #999; margin-right: 10px;">KB33086</span>
+                            <strong style="font-size: 16px; margin-right: 10px;">车辆故障检测系统</strong>
+                            <span style="color: #666;">指导教师：徐衬译</span>
+                        </div>
+                        <div>
+                            <span style="margin-right: 20px;">剩余可选名额：<span style="color: var(--color-primary);">3</span></span>
+                            <span>待处理申请：1</span>
+                        </div>
+                    </div>
+
+                    <!-- 表格 -->
+                    <table class="apple-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"><input type="checkbox"></th>
+                                <th>申请学生姓名</th>
+                                <th>申报时间</th>
+                                <th>教师意见</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>图图</td>
+                                <td>2025-10-01</td>
+                                <td><span style="background-color: rgba(52, 199, 89, 0.1); color: #34C759; padding: 4px 12px; border-radius: 12px; font-size: 12px;">同意</span></td>
+                                <td>
+                                    <button class="btn btn-secondary" style="margin-right: 5px;">通过</button>
+                                    <button class="btn btn-secondary">不通过</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- 底部操作栏 -->
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary">批量通过</button>
+                        <button class="btn btn-primary">批量不通过</button>
+                        <button class="btn btn-primary">查看历史记录</button>
+                        <button class="btn btn-secondary">选题名单导出</button>
+                        <button class="btn btn-secondary">选题名单打印</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="module3" class="module-content">
+            <h1>3. 任务书发布</h1>
+
+            <div class="card">
+                <div class="card-header">任务书完成进度</div>
+                <div class="progress-steps">
+                    <div class="step-item active">
+                        <div class="step-dot">1</div>
+                        <span class="step-label">学生初稿提交</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot">2</div>
+                        <span class="step-label">指导教师修改/审核</span>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot">3</div>
+                        <span class="step-label">教科办通过</span>
+                    </div>
+                </div>
+                <blockquote style="font-size: 13px; color: var(--color-text-secondary);" data-role="student,teacher">
+                    当前阶段：指导教师正在审阅任务书初稿，请等待。
+                </blockquote>
+            </div>
+            
+            <div class="base-upload-card" data-role="student,teacher">
+                <div class="card-header">学生任务书初稿上传</div>
+                <div class="card-body">
+                    <div class="upload-area" data-role="student" onclick="document.getElementById('task-upload-input').click()" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;">
+                        <input type="file" id="task-upload-input" style="display: none;">
+                        <div style="width: 40px; height: 40px; background-color: rgba(0,122,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p style="margin: 0 0 5px; font-weight: 500; font-size: 14px;">将文件拖到此处上传</p>
+                        <p style="margin: 0 0 10px; color: #86868b; font-size: 12px;">或者，您可以单击此处选择一个文件</p>
+                        <span style="color: #007AFF; font-size: 13px; font-weight: 500;">点击上传</span>
+                    </div>
+                    <div data-role="teacher" style="padding: 20px; text-align: center; background-color: #f5f5f7; border-radius: 8px; color: #86868b;">
+                        [学生任务书初稿预览]
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">任务书打印</button>
+                    <button class="btn btn-secondary">任务书下载</button>
+                    <button class="btn btn-secondary">任务书查看</button>
+                    <button class="btn btn-primary" data-role="student">修改/提交</button>
+                </div>
+            </div>
+            
+            <div class="base-upload-card" data-role="student,teacher">
+                <div class="card-header">导师任务书修改稿</div>
+                <div class="card-body">
+                    <div class="upload-area" data-role="teacher" onclick="document.getElementById('teacher-task-upload-input').click()" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;">
+                        <input type="file" id="teacher-task-upload-input" style="display: none;">
+                        <div style="width: 40px; height: 40px; background-color: rgba(0,122,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p style="margin: 0 0 5px; font-weight: 500; font-size: 14px;">将文件拖到此处上传</p>
+                        <p style="margin: 0 0 10px; color: #86868b; font-size: 12px;">或者，您可以单击此处选择一个文件</p>
+                        <span style="color: #007AFF; font-size: 13px; font-weight: 500;">点击上传</span>
+                    </div>
+                    <div data-role="student" style="padding: 20px; text-align: center; background-color: #f5f5f7; border-radius: 8px; color: #86868b;">
+                        [导师任务书修改稿预览]
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">任务书打印</button>
+                    <button class="btn btn-secondary" data-role="student">任务书下载</button>
+                    <button class="btn btn-secondary" data-role="teacher">任务书上传</button>
+                    <button class="btn btn-secondary">任务书查看</button>
+                    <button class="btn btn-primary" data-role="teacher">修改/提交下发</button>
+                </div>
+            </div>
+            
+            <div class="card" data-role="admin">
+                <div class="card-header">任务书审核列表</div>
+                <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                    <div>
+                        <button class="btn btn-primary">批量删除</button>
+                        <button class="btn btn-secondary">打印/导出</button>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" placeholder="搜索姓名" style="width: 150px;">
+                        <button class="btn btn-primary">筛选/确认</button>
+                    </div>
+                </div>
+
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox"></th>
+                            <th>学生姓名</th>
+                            <th>指导教师</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>张三</td>
+                            <td>David</td>
+                            <td>
+                                <button class="btn btn-secondary">查看任务书详情</button>
+                                <button class="btn btn-primary">通过</button>
+                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>李四</td>
+                            <td>Julie</td>
+                            <td>
+                                <button class="btn btn-secondary">查看任务书详情</button>
+                                <button class="btn btn-primary">通过</button>
+                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="module4" class="module-content">
+            <h1>4. 开题管理</h1>
+            
+            <div class="card">
+                <p style="font-size: 16px; font-weight: 500;">开题截止日期: <strong style="color: var(--color-danger-text);">2026-05-08</strong></p>
+            </div>
+
+            <div class="base-upload-card" data-role="student,teacher,admin">
+                <div class="card-header">学生开题报告上传</div>
+                <div class="card-body">
+                    [开题报告文件预览占位符]
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary" data-role="student">开题报告上传</button>
+                    <button class="btn btn-secondary">开题报告下载</button>
+                    <button class="btn btn-secondary">开题报告查看</button>
+                    <button class="btn btn-primary" data-role="student">修改/提交</button>
+                </div>
+            </div>
+            
+            <div class="card" data-role="student,teacher,admin">
+                <div class="card-header">开题答辩记录</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <button class="btn btn-primary" onclick="showAlert('新增记录表单')">+ 新增记录</button>
+                        <button class="btn btn-secondary">批量删除</button>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <select style="width: 100px;">
+                            <option>排序: 默认</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;"><input type="checkbox"></th>
+                            <th style="width: 15%;">学生姓名</th>
+                            <th style="width: 15%;">指导教师</th>
+                            <th style="width: 20%;">问答情况</th>
+                            <th style="width: 25%;">审查意见</th>
+                            <th style="width: 15%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>图图</td>
+                            <td>David</td>
+                            <td>具体内容</td>
+                            <td>具体审查意见内容</td>
+                            <td><button class="btn btn-primary">修改</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>图图</td>
+                            <td>David</td>
+                            <td>具体内容</td>
+                            <td>具体审查意见内容</td>
+                            <td><button class="btn btn-primary">修改</button></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>图图</td>
+                            <td>David</td>
+                            <td>具体内容</td>
+                            <td>具体审查意见内容</td>
+                            <td><button class="btn btn-primary">修改</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 25px; text-align: right; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                    <button class="btn btn-secondary">答辩记录下载</button>
+                    <button class="btn btn-primary" onclick="showAlert('提交答辩记录至教科办')">提交答辩记录至教科办</button>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center; color: var(--color-text-secondary);">
+                    <span>共 3 条记录 | 第 1 / 1 页</span>
+                    <button class="btn btn-secondary" disabled>上一页</button>
+                    <button class="btn btn-secondary" disabled>下一页</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="module5" class="module-content">
+            <h1>5. 指导记录管理</h1>
+
+            <div class="card" data-role="student,teacher">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>学生基本信息</span>
+                    <span style="font-weight: 500; font-size: 14px; color: var(--color-danger-text);" data-role="student">提交截止时间：2026/5/1</span>
+                </div>
+                <div class="user-info-base-card">
+                    <div class="info-item">
+                        <span class="label">学生姓名</span>
+                        <p class="value" id="info-student-name"></p>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">指导教师</span>
+                        <p class="value" id="info-teacher-name"></p>
+                    </div>
+                    <div class="info-item topic">
+                        <span class="label">选题课题</span>
+                        <p class="value" id="info-topic-title"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    指导记录
+                    <span id="record-count-header" style="float: right; font-weight: 500; font-size: 14px;" data-role="student">
+                        已申报数量/下限: 
+                        <strong style="color: var(--color-primary);" id="submitted-count">0</strong> / 8
+                    </span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <button class="btn btn-primary" onclick="openAddRecordModal()" data-role="student">+ 新增记录</button>
+                        <button class="btn btn-secondary" onclick="deleteSelectedRecords()">批量删除</button>
+                    </div>
+                    <!-- 筛选和排序框已删除 -->
+                </div>
+
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;"><input type="checkbox" id="selectAllRecords" onchange="toggleSelectAll()"></th>
+                            <th style="width: 10%;">学生姓名</th>
+                            <th style="width: 10%;">指导教师</th>
+                            <th style="width: 25%;">指导记录表内容</th>
+                            <th style="width: 35%;">审查意见</th>
+                            <th style="width: 15%;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guidance-record-list">
+                        <!-- 内容将通过 JS 动态插入 -->
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 25px; text-align: right; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                    <button class="btn btn-secondary">答辩记录下载</button>
+                </div>
+
+                <div style="margin-top: 20px; text-align: center; color: var(--color-text-secondary);">
+                    <span>共 <span id="record-count">0</span> 条记录</span>
+                </div>
+            </div>
+
+        <!-- 新增/修改指导记录模态框 -->
+        <div id="guidance-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+            <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 50%; border-radius: 10px;">
+                <h2 id="modal-title" style="margin-bottom: 20px;">新增指导记录</h2>
+                <form id="guidance-form">
+                    <input type="hidden" id="record-id">
+                    
+                    <div class="form-group" style="margin-bottom: 15px;" data-role="student">
+                        <label>学生姓名:</label>
+                        <input type="text" id="student-name" style="width: 100%; padding: 8px; margin-top: 5px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 15px;" data-role="student">
+                        <label>指导教师:</label>
+                        <input type="text" id="teacher-name" style="width: 100%; padding: 8px; margin-top: 5px;">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;" data-role="student">
+                        <label>指导记录表 (上传):</label>
+                        <input type="file" id="record-file" style="margin-top: 5px;">
+                        <p style="font-size: 12px; color: #666;">(模拟上传，实际存储文件名)</p>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;" data-role="admin">
+                        <label>审查意见:</label>
+                        <select id="teacher-comment-select" style="width: 100%; padding: 8px; margin-top: 5px;">
+                            <option value="">请选择</option>
+                            <option value="通过">通过</option>
+                            <option value="不通过">不通过</option>
+                        </select>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="saveRecord()" id="modal-submit-btn">提交</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        </div>
+
+        <div id="module6" class="module-content">
+            <h1>6. 中期检查</h1>
+
+            <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+                <p style="font-size: 16px; font-weight: 500; margin: 0;">中期检查截止日期: <strong style="color: var(--color-danger-text);">2026-05-08</strong></p>
+                <div style="display: flex; gap: 10px;" data-role="student,teacher,admin">
+                    <button class="btn btn-secondary">材料导出</button>
+                    <button class="btn btn-secondary">结果打印</button>
+                </div>
+            </div>
+            
+            <div class="base-upload-card" data-role="student,teacher,admin">
+                <div class="card-header">学生中期报告上传</div>
+                <div class="card-body">
+                    [中期报告文件预览占位符]
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">中期报告下载</button>
+                    <button class="btn btn-secondary">中期报告查看</button>
+                    <button class="btn btn-primary" data-role="student">材料上传</button>
+                </div>
+            </div>
+            
+            <div class="base-upload-card" data-role="student,teacher,admin">
+                <div class="card-header">导师审核结果</div>
+                <div class="card-body">
+                    [导师中期检查表预览/填写占位符]
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">审核意见下载</button>
+                    <button class="btn btn-secondary">审核意见查看</button>
+                    <button class="btn btn-primary" data-role="teacher">材料上传</button>
+                </div>
+            </div>
+
+            <div class="base-upload-card" data-role="student,teacher,admin">
+                <div class="card-header">教科办审核结果</div>
+                <div class="card-body">
+                    [教科办中期检查表预览/填写占位符]
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-secondary">审核意见下载</button>
+                    <button class="btn btn-secondary">审核意见查看</button>
+                    <button class="btn btn-primary" data-role="admin">材料上传</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="module7" class="module-content">
+            <h1>7. 论文管理</h1>
+
+            <div class="card">
+                <div class="card-header">用户信息</div>
+                <p><strong>指导教师：</strong><span id="paper-teacher-info"></span></p>
+                <div class="card-header" style="margin-top: 20px;">学生基本信息</div>
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>学号</th>
+                            <th>专业</th>
+                            <th>指导教师</th>
+                            <th>论文题目</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paper-student-list">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="student">
+                <div class="card-header">论文上传 (学生端)</div>
+                <p>请选择上传类型：</p>
+                <select style="margin-bottom: 10px;">
+                    <option>论文初稿</option>
+                    <option>论文修改稿</option>
+                </select>
+                <input type="file" accept=".pdf,.doc,.docx">
+                <button class="btn btn-primary" onclick="uploadFile()">上传论文</button>
+            </div>
+
+            <div class="card" data-role="teacher">
+                <div class="card-header">我的指导学生论文 (一审)</div>
+                <table class="apple-table">
+                    <thead><tr><th>学生</th><th>当前版本</th><th>一审状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>张三</td><td>V1.1 (修改稿)</td><td><span class="status-pill status-pending">待审阅</span></td><td><button class="btn btn-primary" onclick="showAlert('进入审阅页面')">进入审阅</button></td></tr>
+                        <tr><td>李四</td><td>V1.0 (初稿)</td><td><span class="status-pill status-success">已审阅</span></td><td><button class="btn btn-secondary" onclick="showAlert('查看评审结果')">查看结果</button></td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 20px;">
+                    <label>评审意见：</label>
+                    <textarea rows="4" placeholder="请输入评审意见..."></textarea>
+                    <button class="btn btn-primary" onclick="submitReview()">提交评审</button>
+                </div>
+            </div>
+
+            <div class="card" data-role="teacher">
+                <div class="card-header">分配给我的盲审任务 (二审)</div>
+                <table class="apple-table">
+                    <thead><tr><th>论文编号</th><th>专业</th><th>二审状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>[匿名] LN2021001</td><td>计算机科学</td><td><span class="status-pill status-pending">待评审</span></td><td><button class="btn btn-primary" onclick="showAlert('开始匿名评审')">开始评审</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="student">
+                <div class="card-header">评审结果查看 (学生端)</div>
+                <table class="apple-table">
+                    <thead><tr><th>评审类型</th><th>评审人</th><th>评审意见</th><th>修改意见</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>一审</td>
+                            <td>指导教师</td>
+                            <td>内容丰富，结构合理</td>
+                            <td>建议增加实验数据</td>
+                        </tr>
+                        <tr>
+                            <td>二审</td>
+                            <td>匿名评审</td>
+                            <td>创新性强</td>
+                            <td>完善文献综述</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">教务处论文汇总</div>
+                <button class="btn btn-primary" onclick="showAlert('汇总所有通过审核的论文')">汇总论文</button>
+                <button class="btn btn-secondary" onclick="showAlert('导入系统')">导入系统</button>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">论文筛选与导出</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <select>
+                        <option>学院: 全部</option>
+                        <option>学院: 计算机学院</option>
+                    </select>
+                    <select>
+                        <option>专业: 全部</option>
+                        <option>专业: 计算机科学</option>
+                    </select>
+                    <input type="text" placeholder="学号">
+                    <select>
+                        <option>评审状态: 全部</option>
+                        <option>评审状态: 待评审</option>
+                        <option>评审状态: 已评审</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="exportData()">导出论文 (PDF/Word)</button>
+                <button class="btn btn-secondary" onclick="exportData()">导出评审意见 (Excel/PDF)</button>
+                <button class="btn btn-secondary" onclick="checkPlagiarism()">论文查重</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">系统提醒</div>
+                <p>论文提交截止时间：2026-04-30 (剩余 15 天)</p>
+                <p>评审截止时间：2026-05-15 (剩余 30 天)</p>
+            </div>
+        </div>
+
+        <div id="module8" class="module-content">
+            <h1>8. 毕业答辩</h1>
+
+            <div class="card" data-role="student,teacher,admin">
+                <div class="card-header">用户信息</div>
+                <p><strong>指导教师：</strong><span id="defense-teacher-info"></span></p>
+                <div class="card-header" style="margin-top: 20px;">学生基本信息</div>
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>学号</th>
+                            <th>专业</th>
+                            <th>指导教师</th>
+                            <th>毕业设计（论文）题目</th>
+                            <th>答辩时间</th>
+                            <th>答辩地点</th>
+                        </tr>
+                    </thead>
+                    <tbody id="defense-student-list">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="student">
+                <div class="card-header">答辩资料上传</div>
+                <p>论文终稿：<input type="file" accept=".pdf"></p>
+                <p>PPT：<input type="file" accept=".ppt,.pptx"></p>
+                <button class="btn btn-primary" onclick="uploadFile()">上传资料</button>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">答辩记录上传</div>
+                <input type="file" accept=".mp3,.wav,.txt">
+                <button class="btn btn-primary" onclick="uploadFile()">上传录音文件</button>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">指导教师答辩资料录入</div>
+                <textarea rows="4" placeholder="录入答辩资料内容..."></textarea>
+                <button class="btn btn-primary" onclick="submitReview()">提交录入</button>
+                <button class="btn btn-secondary" onclick="showAlert('查看录入内容')">查看/修改</button>
+                <p style="color: var(--color-text-secondary); margin-top: 10px;">提交后不可修改</p>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">答辩组审核</div>
+                <table class="apple-table">
+                    <thead><tr><th>学生</th><th>资料状态</th><th>审核状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>张三</td><td>已上传</td><td>待审核</td><td><button class="btn btn-primary" onclick="submitReview()">审核</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">答辩记录处理</div>
+                <button class="btn btn-primary" onclick="convertAudioToText()">录音转文字</button>
+                <div style="margin-top: 15px;">
+                    <label>生成的QA记录：</label>
+                    <textarea rows="6" placeholder="Q: 问题1&#10;A: 回答1&#10;&#10;Q: 问题2&#10;A: 回答2"></textarea>
+                    <button class="btn btn-secondary" onclick="showAlert('修改QA记录')">修改QA</button>
+                    <button class="btn btn-primary" onclick="submitReview()">确认提交</button>
+                    <p style="color: var(--color-text-secondary); margin-top: 10px;">确认提交后不可修改</p>
+                </div>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">学生筛选</div>
+                <div style="display: flex; gap: 10px;">
+                    <select>
+                        <option>学院: 全部</option>
+                        <option>学院: 计算机学院</option>
+                    </select>
+                    <select>
+                        <option>班级: 全部</option>
+                        <option>班级: 2021级1班</option>
+                    </select>
+                    <input type="text" placeholder="学号">
+                </div>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">导出与打印</div>
+                <button class="btn btn-primary" onclick="exportData()">导出答辩记录 (PDF/Excel)</button>
+                <button class="btn btn-secondary" onclick="exportData()">导出答辩资料</button>
+                <button class="btn btn-secondary" onclick="showAlert('打印功能')">打印资料和记录</button>
+            </div>
+        </div>
+
+        <div id="module9" class="module-content">
+            <h1>9. 成绩管理</h1>
+
+            <div class="card" data-role="student,teacher,admin">
+                <div class="card-header">用户信息</div>
+                <p><strong>指导教师：</strong><span id="score-teacher-info"></span></p>
+                <div class="card-header" style="margin-top: 20px;">学生基本信息</div>
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>姓名</th>
+                            <th>学号</th>
+                            <th>专业</th>
+                            <th>指导教师</th>
+                            <th>毕业设计（论文）题目</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score-student-list">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">成绩录入模块</div>
+                <table class="apple-table">
+                    <thead>
+                        <tr>
+                            <th>学生</th>
+                            <th>开题答辩成绩</th>
+                            <th>教师平时指导成绩</th>
+                            <th>指导教师对论文评价成绩</th>
+                            <th>论文验收答辩成绩</th>
+                            <th>总分</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="score-entry-list">
+                        <tr>
+                            <td><span id="score-student-name"></span></td>
+                            <td><input type="number" min="0" max="100" style="width: 60px;" class="score-input"></td>
+                            <td><input type="number" min="0" max="100" style="width: 60px;" class="score-input"></td>
+                            <td><input type="number" min="0" max="100" style="width: 60px;" class="score-input"></td>
+                            <td><input type="number" min="0" max="100" style="width: 60px;" class="score-input"></td>
+                            <td><strong id="total-score"></strong></td>
+                            <td><span class="status-pill status-pending">草稿</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-secondary" onclick="calculateScore()">计算总分</button>
+                <button class="btn btn-primary" onclick="submitReview()">提交录入</button>
+                <button class="btn btn-secondary" onclick="showAlert('查看/修改成绩')">查看/修改</button>
+                <p style="color: var(--color-text-secondary); margin-top: 10px;">提交后不可修改</p>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">教务处成绩审查</div>
+                <table class="apple-table">
+                    <thead><tr><th>学生</th><th>成绩详情</th><th>审查状态</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>张三</td><td>总分: 88.8</td><td>待审查</td><td><button class="btn btn-primary" onclick="submitReview()">审查/修改</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card" data-role="student,teacher,admin">
+                <div class="card-header">成绩查看</div>
+                <p><strong>学生端：</strong>可查看自己的成绩</p>
+                <p><strong>教师端：</strong>可查看指导学生的成绩</p>
+                <p><strong>教务处：</strong>可查看所有学生的成绩</p>
+                <button class="btn btn-secondary" onclick="showAlert('查看成绩')">查看成绩</button>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">学生筛选</div>
+                <div style="display: flex; gap: 10px;">
+                    <select>
+                        <option>学院: 全部</option>
+                        <option>学院: 计算机学院</option>
+                    </select>
+                    <select>
+                        <option>班级: 全部</option>
+                        <option>班级: 2021级1班</option>
+                    </select>
+                    <input type="text" placeholder="学号">
+                </div>
+            </div>
+
+            <div class="card" data-role="admin">
+                <div class="card-header">成绩分块查看与统计</div>
+                <select style="margin-bottom: 10px;">
+                    <option>查看: 全部成绩</option>
+                    <option>查看: 开题答辩成绩</option>
+                    <option>查看: 平时指导成绩</option>
+                    <option>查看: 论文评价成绩</option>
+                    <option>查看: 答辩成绩</option>
+                </select>
+                <button class="btn btn-secondary" onclick="showAlert('生成统计')">生成统计</button>
+            </div>
+
+            <div class="card" data-role="student,teacher,admin">
+                <div class="card-header">导出成绩</div>
+                <button class="btn btn-primary" onclick="exportData()">导出学生信息 (PDF/Excel)</button>
+            </div>
+        </div>
+
+        <div id="module10" class="module-content" data-role="admin">
+            <h1>10. 归档管理</h1>
+
+            <div class="card">
+                <div class="card-header">用户信息</div>
+                <p><strong>登录用户：</strong><span id="archive-user-info"></span></p>
+                <div class="card-header" style="margin-top: 20px;">上传入口</div>
+                <input type="file" multiple>
+                <button class="btn btn-primary" onclick="uploadFile()">上传材料</button>
+            </div>
+
+            <div class="card" data-role>
+                <div class="card-header">学生归档材料审核</div>
+                <table class="apple-table">
+                    <thead><tr><th>学生</th><th>论文终稿</th><th>开题报告</th><th>中期检查表</th><th>审核状态</th><th>操作</th></tr></thead>
+                    <tbody id="archive-student-list">
+                        <!-- 动态加载 -->
+                    </tbody>
+                </table>
+                <textarea rows="3" placeholder="审核意见或驳回原因..." style="margin-top: 10px;"></textarea>
+            </div>
+
+            <div class="card">
+                <div class="card-header">自动归档</div>
+                <p>审核通过后，系统将自动将材料存入归档库，并标记学生为"已归档"。</p>
+                <button class="btn btn-primary" onclick="archiveMaterials()">执行归档</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">档案查询</div>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" placeholder="学生姓名">
+                    <input type="text" placeholder="课题名称">
+                    <input type="date" placeholder="时间范围">
+                </div>
+                <button class="btn btn-primary" onclick="showAlert('查询结果')">查询档案</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">智能校验</div>
+                <p>自动检查文件格式、命名规范、字数要求（论文字数≥8000字）。</p>
+                <button class="btn btn-secondary" onclick="showAlert('校验结果')">开始校验</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">批量导出</div>
+                <p>教务处可批量下载归档材料包（按班级/专业压缩为ZIP）。</p>
+                <select style="margin-bottom: 10px;">
+                    <option>按班级导出</option>
+                    <option>按专业导出</option>
+                </select>
+                <button class="btn btn-primary" onclick="exportData()">批量导出</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">存储预警</div>
+                <p>当前存储容量：75%</p>
+                <p style="color: var(--color-warning-text);">系统存储容量达80%时，将自动通知管理员清理或扩容。</p>
+                <button class="btn btn-secondary" onclick="showAlert('清理存储')">清理存储</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">数据统计</div>
+                <p>生成归档率报表（如各班级未归档学生名单）。</p>
+                <button class="btn btn-primary" onclick="showAlert('生成报表')">生成报表</button>
+            </div>
+        </div>    </div>
+</div>
+
+<script>
+   document.addEventListener('DOMContentLoaded', function() {
+       const userRole = localStorage.getItem("userRole") || "admin"; // 默认admin（教务处）
+       
+       // 设置选择器的默认值
+       const roleSelector = document.getElementById('role-selector');
+       if (roleSelector) {
+           roleSelector.value = userRole;
+           roleSelector.addEventListener('change', function() {
+               const selectedRole = this.value;
+               localStorage.setItem('userRole', selectedRole);
+               location.reload(); 
+           });
+       }
+       
+       // 检查并隐藏模块内的子元素（基于data-role）
+       const roleElements = document.querySelectorAll('[data-role]');
+       roleElements.forEach(element => {
+           const allowedRoles = element.getAttribute('data-role').split(',');
+           if (!allowedRoles.includes(userRole)) {
+               element.style.display = 'none';
+           }
+       });
+       
+       // --- 修复模块堆叠和初始状态的核心逻辑 ---
+       let firstAvailableModuleId = null;
+       const navItems = document.querySelectorAll('#main-nav-list .nav-item');
+       const allModules = document.querySelectorAll('.module-content');
+       
+       // 1. 移除所有模块和导航项的 active 状态
+       allModules.forEach(m => m.classList.remove('active'));
+       navItems.forEach(item => item.classList.remove('active'));
+
+       // 2. 过滤导航项并找出第一个可用模块
+       navItems.forEach(item => {
+           const targetId = item.getAttribute('data-target').replace('.html', '');
+           const module = document.getElementById(targetId);
+           
+           // 检查整个模块是否有角色限制 (如 module 10)
+           if (module) {
+               const moduleRole = module.getAttribute('data-role');
+               if (moduleRole && !moduleRole.split(',').includes(userRole)) {
+                    item.style.display = 'none';
+               } else if (!firstAvailableModuleId && item.style.display !== 'none') {
+                   // 找到第一个可用的模块
+                   firstAvailableModuleId = targetId;
+               }
+           }
+       });
+
+       // 3. 激活第一个可用的模块和对应的导航项
+       if (firstAvailableModuleId) {
+           const firstModule = document.getElementById(firstAvailableModuleId);
+           const firstNavItem = document.querySelector(`[data-target="${firstAvailableModuleId}.html"]`);
+           
+           if (firstModule) {
+               firstModule.classList.add('active');
+           }
+           if (firstNavItem) {
+               firstNavItem.classList.add('active');
+           }
+       }
+   });
+</script>
+
+<script src="script.js"></script>
+</body>
+</html>
