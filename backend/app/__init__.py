@@ -15,9 +15,8 @@ def create_app(config_class=Config):
     from app.api import guidance
     app.register_blueprint(guidance.bp)
     
-    # 可以在这里注册更多模块，例如:
-    # from app.api import task
-    # app.register_blueprint(task.bp)
+    from app.api import paper
+    app.register_blueprint(paper.bp)
 
     # 创建数据库表 (仅用于开发环境快速初始化)
     with app.app_context():
@@ -46,7 +45,7 @@ def create_app(config_class=Config):
 
 def init_test_data():
     """初始化一些测试数据，避免数据库为空"""
-    from app.models import User, Project, GuidanceRecord
+    from app.models import User, Project, GuidanceRecord, Paper
     
     if User.query.first():
         return
@@ -68,3 +67,5 @@ def init_test_data():
     # record = GuidanceRecord(project=project, content='第一次指导记录内容', teacher_comment='同意开题')
     # db.session.add(record)
     # db.session.commit()
+
+    # 记得创建一条论文管理记录
