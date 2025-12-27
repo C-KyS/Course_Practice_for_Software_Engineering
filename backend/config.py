@@ -10,7 +10,8 @@ class Config:
     # 格式: mysql+pymysql://username:password@host:port/database_name
     
     # 数据库名: graduation_project_db
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Tu.050424@localhost:3306/graduation_project_db'
+    # SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Tu.050424@localhost:3306/graduation_project_db'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:cyh20041102@localhost:3306/graduation_project_db'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = 'dev-secret-key'

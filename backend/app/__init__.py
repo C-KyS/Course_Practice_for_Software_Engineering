@@ -17,9 +17,28 @@ def create_app(config_class=Config):
     
     from app.api import paper
     app.register_blueprint(paper.bp)
+    
+    from app.api import task
+    app.register_blueprint(task.bp)
 
     # 创建数据库表 (仅用于开发环境快速初始化)
     with app.app_context():
+        # 检查并修复任务书表结构
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'task_documents' in inspector.get_table_names():
+                columns = [col['name'] for col in inspector.get_columns('task_documents')]
+                if 'project_id' not in columns:
+                    # 删除旧表，让Flask重新创建
+                    print("检测到旧的任务书表结构，删除旧表以重新创建...")
+                    db.session.execute(text("DROP TABLE IF EXISTS task_documents"))
+                    db.session.commit()
+                    print("旧表已删除，将重新创建")
+        except Exception as e:
+            print(f"检查表结构时出错: {e}")
+            db.session.rollback()
+        
         db.create_all()
         # 初始化测试数据
         init_test_data()

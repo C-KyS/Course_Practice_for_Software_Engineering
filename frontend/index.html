@@ -411,10 +411,10 @@
         <div id="module3" class="module-content">
             <h1>3. 任务书发布</h1>
 
-            <div class="card">
+            <div class="card" data-role="student,teacher">
                 <div class="card-header">任务书完成进度</div>
                 <div class="progress-steps">
-                    <div class="step-item active">
+                    <div class="step-item">
                         <div class="step-dot">1</div>
                         <span class="step-label">学生初稿提交</span>
                     </div>
@@ -427,16 +427,16 @@
                         <span class="step-label">教科办通过</span>
                     </div>
                 </div>
-                <blockquote style="font-size: 13px; color: var(--color-text-secondary);" data-role="student,teacher">
-                    当前阶段：指导教师正在审阅任务书初稿，请等待。
-                </blockquote>
+                <!-- <blockquote style="font-size: 13px; color: var(--color-text-secondary);" data-role="student,teacher">
+                    当前阶段：请上传任务书初稿。
+                </blockquote> -->
             </div>
             
             <div class="base-upload-card" data-role="student,teacher">
                 <div class="card-header">学生任务书初稿上传</div>
                 <div class="card-body">
-                    <div class="upload-area" data-role="student" onclick="document.getElementById('task-upload-input').click()" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;">
-                        <input type="file" id="task-upload-input" style="display: none;">
+                    <div class="upload-area" data-role="student" id="student-draft-upload-area" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;">
+                        <input type="file" id="task-upload-input" style="display: none;" onchange="uploadStudentDraft()">
                         <div style="width: 40px; height: 40px; background-color: rgba(0,122,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -453,18 +453,21 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-secondary">任务书打印</button>
-                    <button class="btn btn-secondary">任务书下载</button>
-                    <button class="btn btn-secondary">任务书查看</button>
-                    <button class="btn btn-primary" data-role="student">修改/提交</button>
+                    <button class="btn btn-secondary" onclick="printTaskFile('student_draft')" data-role="student">任务书打印</button>
+                    <button class="btn btn-secondary" onclick="downloadTaskFile('student_draft')" data-role="student">任务书下载</button>
+                    <button class="btn btn-secondary" onclick="viewTaskFile('student_draft')" data-role="student">任务书查看</button>
+                    <button class="btn btn-secondary" onclick="printTaskFile('student_draft')" data-role="teacher">任务书打印</button>
+                    <button class="btn btn-secondary" onclick="downloadTaskFile('student_draft')" data-role="teacher">任务书下载</button>
+                    <button class="btn btn-secondary" onclick="viewTaskFile('student_draft')" data-role="teacher">任务书查看</button>
+                    <button class="btn btn-primary" data-role="student" onclick="submitStudentDraft()">修改/提交</button>
                 </div>
             </div>
             
             <div class="base-upload-card" data-role="student,teacher">
                 <div class="card-header">导师任务书修改稿</div>
                 <div class="card-body">
-                    <div class="upload-area" data-role="teacher" onclick="document.getElementById('teacher-task-upload-input').click()" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;">
-                        <input type="file" id="teacher-task-upload-input" style="display: none;">
+                    <div class="upload-area" data-role="teacher" id="teacher-revision-upload-area" style="border: 2px dashed #d2d2d7; border-radius: 8px; padding: 30px; text-align: center; background-color: #fbfbfd; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('teacher-task-upload-input').click()">
+                        <input type="file" id="teacher-task-upload-input" style="display: none;" onchange="uploadTeacherRevision()">
                         <div style="width: 40px; height: 40px; background-color: rgba(0,122,255,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -481,11 +484,13 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn btn-secondary">任务书打印</button>
-                    <button class="btn btn-secondary" data-role="student">任务书下载</button>
-                    <button class="btn btn-secondary" data-role="teacher">任务书上传</button>
-                    <button class="btn btn-secondary">任务书查看</button>
-                    <button class="btn btn-primary" data-role="teacher">修改/提交下发</button>
+                    <button class="btn btn-secondary" onclick="printTaskFile('teacher_revision')" data-role="teacher">任务书打印</button>
+                    <button class="btn btn-secondary" onclick="downloadTaskFile('teacher_revision')" data-role="teacher">任务书下载</button>
+                    <button class="btn btn-secondary" onclick="viewTaskFile('teacher_revision')" data-role="teacher">任务书查看</button>
+                    <button class="btn btn-secondary" onclick="printTaskFile('teacher_revision')" data-role="student">任务书打印</button>
+                    <button class="btn btn-secondary" onclick="downloadTaskFile('teacher_revision')" data-role="student">任务书下载</button>
+                    <button class="btn btn-secondary" onclick="viewTaskFile('teacher_revision')" data-role="student">任务书查看</button>
+                    <button class="btn btn-primary" data-role="teacher" onclick="submitTeacherRevision()">修改/提交下发</button>
                 </div>
             </div>
             
@@ -493,12 +498,7 @@
                 <div class="card-header">任务书审核列表</div>
                 <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
                     <div>
-                        <button class="btn btn-primary">批量删除</button>
                         <button class="btn btn-secondary">打印/导出</button>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" placeholder="搜索姓名" style="width: 150px;">
-                        <button class="btn btn-primary">筛选/确认</button>
                     </div>
                 </div>
 
@@ -512,26 +512,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td><input type="checkbox"></td>
-                            <td>张三</td>
-                            <td>David</td>
-                            <td>
-                                <button class="btn btn-secondary">查看任务书详情</button>
-                                <button class="btn btn-primary">通过</button>
-                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><input type="checkbox"></td>
-                            <td>李四</td>
-                            <td>Julie</td>
-                            <td>
-                                <button class="btn btn-secondary">查看任务书详情</button>
-                                <button class="btn btn-primary">通过</button>
-                                <button class="btn btn-secondary" style="color: var(--color-danger-text);">退回</button>
-                            </td>
-                        </tr>
+                        <!-- 内容将通过 JS 动态插入 -->
                     </tbody>
                 </table>
             </div>
@@ -626,7 +607,7 @@
         <div id="module5" class="module-content">
             <h1>5. 指导记录管理</h1>
 
-            <div class="card" data-role="student,teacher">
+            <div class="card" data-role="student">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>学生基本信息</span>
                     <span style="font-weight: 500; font-size: 14px; color: var(--color-danger-text);" data-role="student">提交截止时间：2026/5/1</span>
@@ -659,6 +640,8 @@
                     <div>
                         <button class="btn btn-primary" onclick="openAddRecordModal()" data-role="student">+ 新增记录</button>
                         <button class="btn btn-secondary" onclick="deleteSelectedRecords()">批量删除</button>
+                        <input type="text" id="student-name-search" placeholder="输入学生姓名搜索" style="margin-left: 10px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: 4px; width: 200px;" data-role="teacher,admin">
+                        <button class="btn btn-primary" onclick="filterRecordsByStudentName()" style="margin-left: 5px;" data-role="teacher,admin">筛选</button>
                     </div>
                     <!-- 筛选和排序框已删除 -->
                 </div>
