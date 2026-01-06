@@ -759,119 +759,112 @@
             <h1>7. 论文管理</h1>
 
             <div class="card">
-                <div class="card-header">用户信息</div>
-                <p><strong>指导教师：</strong><span id="paper-teacher-info"></span></p>
-                <div class="card-header" style="margin-top: 20px;">学生基本信息</div>
+                <p style="font-size: 16px; font-weight: 500;">论文提交截止日期: <strong style="color: var(--color-danger-text);">2026-06-15</strong></p>
+            </div>
+
+            <!-- 学生视图 -->
+            <div class="card" data-role="student">
+                <div class="card-header">我的论文</div>
+                <div class="base-upload-card" style="border: none; padding: 0; margin-top: 15px;">
+                    <div class="upload-area">
+                        <p>将论文文件（PDF, Word）拖拽到此处，或</p>
+                        <input type="file" id="paper-upload-input" accept=".pdf,.doc,.docx" style="display: none;">
+                        <button class="button" onclick="document.getElementById('paper-upload-input').click();">选择文件</button>
+                    </div>
+                    <div class="file-info" style="display: none;">
+                        <p><strong>已上传:</strong> <span id="paper-filename"></span></p>
+                        <p><strong>上传时间:</strong> <span id="paper-upload-time"></span></p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                    <div class="card-header">评审意见</div>
+                    <p id="paper-feedback">暂无评审意见。</p>
+                    <p><strong>最终成绩:</strong> <span id="paper-score">--</span></p>
+                </div>
+            </div>
+
+            <!-- 教师和教务处视图 -->
+            <div class="card" data-role="teacher,admin">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="card-header" data-role="teacher">待评审论文</div>
+                    <div class="card-header" data-role="admin">论文总览</div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="search" placeholder="搜索学生姓名..." class="search-input">
+                        <button class="button" data-role="admin">导出数据</button>
+                    </div>
+                </div>
+
                 <table class="apple-table">
                     <thead>
                         <tr>
-                            <th>姓名</th>
-                            <th>学号</th>
-                            <th>专业</th>
-                            <th>指导教师</th>
-                            <th>论文题目</th>
+                            <th>学生姓名</th>
+                            <th>课题名称</th>
+                            <th data-role="admin">指导教师</th>
+                            <th>提交状态</th>
+                            <th>评审状态</th>
+                            <th>最终成绩</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody id="paper-student-list">
-                        <!-- 动态加载 -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card" data-role="student">
-                <div class="card-header">论文上传 (学生端)</div>
-                <p>请选择上传类型：</p>
-                <select style="margin-bottom: 10px;">
-                    <option>论文初稿</option>
-                    <option>论文修改稿</option>
-                </select>
-                <input type="file" accept=".pdf,.doc,.docx">
-                <button class="btn btn-primary" onclick="uploadFile()">上传论文</button>
-            </div>
-
-            <div class="card" data-role="teacher">
-                <div class="card-header">我的指导学生论文 (一审)</div>
-                <table class="apple-table">
-                    <thead><tr><th>学生</th><th>当前版本</th><th>一审状态</th><th>操作</th></tr></thead>
-                    <tbody>
-                        <tr><td>张三</td><td>V1.1 (修改稿)</td><td><span class="status-pill status-pending">待审阅</span></td><td><button class="btn btn-primary" onclick="showAlert('进入审阅页面')">进入审阅</button></td></tr>
-                        <tr><td>李四</td><td>V1.0 (初稿)</td><td><span class="status-pill status-success">已审阅</span></td><td><button class="btn btn-secondary" onclick="showAlert('查看评审结果')">查看结果</button></td></tr>
-                    </tbody>
-                </table>
-                <div style="margin-top: 20px;">
-                    <label>评审意见：</label>
-                    <textarea rows="4" placeholder="请输入评审意见..."></textarea>
-                    <button class="btn btn-primary" onclick="submitReview()">提交评审</button>
-                </div>
-            </div>
-
-            <div class="card" data-role="teacher">
-                <div class="card-header">分配给我的盲审任务 (二审)</div>
-                <table class="apple-table">
-                    <thead><tr><th>论文编号</th><th>专业</th><th>二审状态</th><th>操作</th></tr></thead>
-                    <tbody>
-                        <tr><td>[匿名] LN2021001</td><td>计算机科学</td><td><span class="status-pill status-pending">待评审</span></td><td><button class="btn btn-primary" onclick="showAlert('开始匿名评审')">开始评审</button></td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card" data-role="student">
-                <div class="card-header">评审结果查看 (学生端)</div>
-                <table class="apple-table">
-                    <thead><tr><th>评审类型</th><th>评审人</th><th>评审意见</th><th>修改意见</th></tr></thead>
-                    <tbody>
+                    <tbody id="paper-review-list">
                         <tr>
-                            <td>一审</td>
-                            <td>指导教师</td>
-                            <td>内容丰富，结构合理</td>
-                            <td>建议增加实验数据</td>
+                            <td>张三</td>
+                            <td>基于深度学习的图像识别系统</td>
+                            <td data-role="admin">王老师</td>
+                            <td><span class="status-badge status-completed">已提交</span></td>
+                            <td><span class="status-badge status-pending">待评审</span></td>
+                            <td>--</td>
+                            <td><button class="button-link" data-role="teacher" onclick="openPaperReviewModal('张三', '基于深度学习的图像识别系统')">评审</button><button class="button-link" data-role="admin">查看</button></td>
                         </tr>
                         <tr>
-                            <td>二审</td>
-                            <td>匿名评审</td>
-                            <td>创新性强</td>
-                            <td>完善文献综述</td>
+                            <td>李四</td>
+                            <td>企业级SaaS平台架构设计</td>
+                            <td data-role="admin">陈老师</td>
+                            <td><span class="status-badge status-completed">已提交</span></td>
+                            <td><span class="status-badge status-completed">已评审</span></td>
+                            <td>88</td>
+                            <td><button class="button-link" data-role="teacher" onclick="openPaperReviewModal('李四', '企业级SaaS平台架构设计')">查看评审</button><button class="button-link" data-role="admin">查看</button></td>
+                        </tr>
+                        <tr>
+                            <td>王五</td>
+                            <td>物联网在智能家居中的应用</td>
+                            <td data-role="admin">王老师</td>
+                            <td><span class="status-badge status-pending">未提交</span></td>
+                            <td><span class="status-badge status-pending">--</span></td>
+                            <td>--</td>
+                            <td><button class="button-link" data-role="teacher" disabled>评审</button><button class="button-link" data-role="admin">查看</button></td>
                         </tr>
                     </tbody>
                 </table>
-            </div>
-
-            <div class="card" data-role="admin">
-                <div class="card-header">教务处论文汇总</div>
-                <button class="btn btn-primary" onclick="showAlert('汇总所有通过审核的论文')">汇总论文</button>
-                <button class="btn btn-secondary" onclick="showAlert('导入系统')">导入系统</button>
-            </div>
-
-            <div class="card" data-role="admin">
-                <div class="card-header">论文筛选与导出</div>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <select>
-                        <option>学院: 全部</option>
-                        <option>学院: 计算机学院</option>
-                    </select>
-                    <select>
-                        <option>专业: 全部</option>
-                        <option>专业: 计算机科学</option>
-                    </select>
-                    <input type="text" placeholder="学号">
-                    <select>
-                        <option>评审状态: 全部</option>
-                        <option>评审状态: 待评审</option>
-                        <option>评审状态: 已评审</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" onclick="exportData()">导出论文 (PDF/Word)</button>
-                <button class="btn btn-secondary" onclick="exportData()">导出评审意见 (Excel/PDF)</button>
-                <button class="btn btn-secondary" onclick="checkPlagiarism()">论文查重</button>
-            </div>
-
-            <div class="card">
-                <div class="card-header">系统提醒</div>
-                <p>论文提交截止时间：2026-04-30 (剩余 15 天)</p>
-                <p>评审截止时间：2026-05-15 (剩余 30 天)</p>
             </div>
         </div>
 
+        <!-- 论文评审模态框 -->
+        <div id="paper-review-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close-button" onclick="closePaperReviewModal()">&times;</span>
+                <h3>论文评审</h3>
+                <p><strong>学生:</strong> <span id="review-student-name"></span></p>
+                <p><strong>课题:</strong> <span id="review-paper-title"></span></p>
+                <div style="margin-top: 20px;">
+                    <a href="#" class="button-link" download>下载学生论文</a>
+                </div>
+                <form id="paper-review-form" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <label for="review-content">评审意见</label>
+                        <textarea id="review-content" name="content" rows="6" placeholder="输入详细的评审意见和修改建议..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-score">最终成绩</label>
+                        <input type="number" id="review-score" name="score" min="0" max="100" placeholder="输入0-100之间的分数">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="button-secondary" onclick="closePaperReviewModal()">取消</button>
+                        <button type="submit" class="button">提交评审</button>
+                    </div>
+                </form>
+            </div>
+        </div>
         <div id="module8" class="module-content">
             <h1>8. 毕业答辩</h1>
 
@@ -1080,7 +1073,7 @@
                 <button class="btn btn-primary" onclick="uploadFile()">上传材料</button>
             </div>
 
-            <div class="card" data-role>
+            <div class="card" data-role="admin">
                 <div class="card-header">学生归档材料审核</div>
                 <table class="apple-table">
                     <thead><tr><th>学生</th><th>论文终稿</th><th>开题报告</th><th>中期检查表</th><th>审核状态</th><th>操作</th></tr></thead>
@@ -1137,71 +1130,6 @@
             </div>
         </div>    </div>
 </div>
-
-<script>
-   document.addEventListener('DOMContentLoaded', function() {
-       const userRole = localStorage.getItem("userRole") || "admin"; // 默认admin（教务处）
-       
-       // 设置选择器的默认值
-       const roleSelector = document.getElementById('role-selector');
-       if (roleSelector) {
-           roleSelector.value = userRole;
-           roleSelector.addEventListener('change', function() {
-               const selectedRole = this.value;
-               localStorage.setItem('userRole', selectedRole);
-               location.reload(); 
-           });
-       }
-       
-       // 检查并隐藏模块内的子元素（基于data-role）
-       const roleElements = document.querySelectorAll('[data-role]');
-       roleElements.forEach(element => {
-           const allowedRoles = element.getAttribute('data-role').split(',');
-           if (!allowedRoles.includes(userRole)) {
-               element.style.display = 'none';
-           }
-       });
-       
-       // --- 修复模块堆叠和初始状态的核心逻辑 ---
-       let firstAvailableModuleId = null;
-       const navItems = document.querySelectorAll('#main-nav-list .nav-item');
-       const allModules = document.querySelectorAll('.module-content');
-       
-       // 1. 移除所有模块和导航项的 active 状态
-       allModules.forEach(m => m.classList.remove('active'));
-       navItems.forEach(item => item.classList.remove('active'));
-
-       // 2. 过滤导航项并找出第一个可用模块
-       navItems.forEach(item => {
-           const targetId = item.getAttribute('data-target').replace('.html', '');
-           const module = document.getElementById(targetId);
-           
-           // 检查整个模块是否有角色限制 (如 module 10)
-           if (module) {
-               const moduleRole = module.getAttribute('data-role');
-               if (moduleRole && !moduleRole.split(',').includes(userRole)) {
-                    item.style.display = 'none';
-               } else if (!firstAvailableModuleId && item.style.display !== 'none') {
-                   // 找到第一个可用的模块
-                   firstAvailableModuleId = targetId;
-               }
-           }
-       });
-
-       // 3. 激活第一个可用的模块和对应的导航项
-       if (firstAvailableModuleId) {
-           const firstModule = document.getElementById(firstAvailableModuleId);
-           const firstNavItem = document.querySelector(`[data-target="${firstAvailableModuleId}.html"]`);
-           
-           if (firstModule) {
-               firstModule.classList.add('active');
-           }
-           if (firstNavItem) {
-               firstNavItem.classList.add('active');
-           }
-       }
-   });
-</script>
 
 <script src="script.js"></script>
 </body>

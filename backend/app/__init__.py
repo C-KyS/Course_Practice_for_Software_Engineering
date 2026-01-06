@@ -102,26 +102,68 @@ def create_app(config_class=Config):
 def init_test_data():
     """初始化一些测试数据，避免数据库为空"""
     from app.models import User, Project, GuidanceRecord, Paper
+    from datetime import datetime
     
     if User.query.first():
         return
 
-    # 创建用户
-    student = User(username='202101001', name='图图', role='student')
-    teacher = User(username='T1001', name='David', role='teacher')
+    print("正在初始化测试数据...")
+
+    # 1. 创建用户
+    # 学生
+    s1 = User(username='202101001', name='图图', role='student')
+    s2 = User(username='202101002', name='张三', role='student')
+    s3 = User(username='202101003', name='李四', role='student')
+    # 教师
+    t1 = User(username='T1001', name='David', role='teacher')
+    t2 = User(username='T1002', name='王老师', role='teacher')
+    # 管理员
     admin = User(username='admin', name='教科办', role='admin')
     
-    db.session.add_all([student, teacher, admin])
+    db.session.add_all([s1, s2, s3, t1, t2, admin])
     db.session.commit()
     
-    # 创建课题
-    project = Project(title='基于深度学习的图像识别系统研究', student=student, teacher=teacher)
-    db.session.add(project)
+    # 2. 创建课题
+    p1 = Project(title='基于深度学习的图像识别系统研究', student=s1, teacher=t1)
+    p2 = Project(title='企业级SaaS平台架构设计', student=s2, teacher=t2)
+    p3 = Project(title='物联网在智能家居中的应用', student=s3, teacher=t1)
+    
+    db.session.add_all([p1, p2, p3])
     db.session.commit()
     
-    # 创建一条指导记录 (已注释，保持初始为空)
-    # record = GuidanceRecord(project=project, content='第一次指导记录内容', teacher_comment='同意开题')
-    # db.session.add(record)
-    # db.session.commit()
+    # 3. 创建论文数据 (模拟不同状态)
+    
+    # Case 1: 图图 - 已提交，已评审 (高分)
+    paper1 = Paper(
+        title='基于深度学习的图像识别系统研究',
+        abstract='本文提出了一种新的基于CNN的图像识别算法...',
+        file_path='图图_论文初稿.pdf',
+        student_id=s1.id,
+        version='初稿',
+        review_status='已评审',
+        review_type='一审',
+        reviewer_id=t1.id,
+        review_comment='论文结构完整，实验数据详实，创新点突出。建议在引言部分增加更多相关工作的对比。',
+        modify_comment='请修改参考文献格式。',
+        score=92.5,
+        upload_time=datetime.now()
+    )
+    
+    # Case 2: 张三 - 已提交，待评审
+    paper2 = Paper(
+        title='企业级SaaS平台架构设计',
+        abstract='本文探讨了微服务架构在SaaS平台中的应用...',
+        file_path='张三_架构设计.docx',
+        student_id=s2.id,
+        version='初稿',
+        review_status='待评审',
+        review_type='一审',
+        upload_time=datetime.now()
+    )
+    
+    # Case 3: 李四 - 未提交 (不创建 Paper 记录)
+    
+    db.session.add_all([paper1, paper2])
+    db.session.commit()
 
-    # 记得创建一条论文管理记录
+    print("测试数据初始化完成！")

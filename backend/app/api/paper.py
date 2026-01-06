@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models import Paper, User
+from datetime import datetime
 
 bp = Blueprint('paper', __name__, url_prefix='/api/paper')
 
@@ -26,25 +27,29 @@ def list_papers():
 @bp.route('/upload', methods=['POST'])
 def upload_paper():
     """上传论文（仅保存元数据，未处理文件上传）"""
-    user = get_current_user()
-    data = request.json
+    try:
+        user = get_current_user()
+        data = request.json
 
-    # 权限控制：仅学生可上传
-    if not user or user.role != 'student':
-        return jsonify({'error': '仅学生可上传论文'}), 403
+        # 权限控制：仅学生可上传
+        if not user or user.role != 'student':
+            return jsonify({'error': '仅学生可上传论文'}), 403
 
-    new_paper = Paper(
-        title=data.get('title'),
-        abstract=data.get('abstract'),
-        file_path=data.get('filePath'),
-        student_id=user.id,
-        version=data.get('version'),  # 新增
-        review_status='待评审',        # 默认
-        review_type=data.get('reviewType'),  # 可选
-    )
-    db.session.add(new_paper)
-    db.session.commit()
-    return jsonify(new_paper.to_dict()), 201
+        new_paper = Paper(
+            title=data.get('title'),
+            abstract=data.get('abstract'),
+            file_path=data.get('filePath'),
+            student_id=user.id,
+            version=data.get('version'),  # 新增
+            review_status='待评审',        # 默认
+            review_type=data.get('reviewType'),  # 可选
+            upload_time=datetime.now()
+        )
+        db.session.add(new_paper)
+        db.session.commit()
+        return jsonify(new_paper.to_dict()), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/review/<int:id>', methods=['POST'])
 def review_paper(id):
@@ -59,7 +64,14 @@ def review_paper(id):
     paper.reviewer_id = user.id
     paper.review_comment = data.get('reviewComment')
     paper.modify_comment = data.get('modifyComment')
+    paper.score = data.get('score')
     db.session.commit()
+    return jsonify(paper.to_dict())
+
+@bp.route('/<int:id>', methods=['GET'])
+def get_paper(id):
+    """获取单个论文详情"""
+    paper = Paper.query.get_or_404(id)
     return jsonify(paper.to_dict())
 
 @bp.route('/delete', methods=['POST'])
