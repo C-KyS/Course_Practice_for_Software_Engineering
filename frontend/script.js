@@ -411,15 +411,23 @@ async function loadGuidanceModule(resetPage = true) {
         // 渲染学生基本信息
         const infoCard = document.querySelector('#module5 .user-info-base-card');
         if (infoCard && (infoData.studentName || currentUser.role === 'student')) {
-            infoCard.innerHTML = ` <div class = "info-item"><span class = "label"> 学生姓名</ span>
-                                 <p class = "value"> ${infoData.studentName || '图图'} < / p >
-                                 </ div><div class = "info-item">
-                                 <span class = "label"> 指导教师</ span>
-                                 <p class = "value"> ${infoData.teacherName || 'David'} < / p >
-                                 </ div><div class = "info-item topic">
-                                 <span class = "label"> 选题课题</ span><p class = "value"> ${
-                                     infoData.title || '基于深度学习的图像识别系统研究'} < / p >
-                                 </ div>
+            const studentName = infoData.studentName || '图图';
+            const teacherName = infoData.teacherName || 'David';
+            const title = infoData.title || '基于深度学习的图像识别系统研究';
+
+            infoCard.innerHTML = `
+                <div class="info-item">
+                    <span class="label">学生姓名</span>
+                    <p class="value">${studentName}</p>
+                </div>
+                <div class="info-item">
+                    <span class="label">指导教师</span>
+                    <p class="value">${teacherName}</p>
+                </div>
+                <div class="info-item topic">
+                    <span class="label">选题课题</span>
+                    <p class="value">${title}</p>
+                </div>
             `;
         }
         
