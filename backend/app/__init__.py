@@ -39,6 +39,43 @@ def create_app(config_class=Config):
             print(f"检查表结构时出错: {e}")
             db.session.rollback()
         
+        # 检查并修复指导记录表结构
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'guidance_records' in inspector.get_table_names():
+                columns = [col['name'] for col in inspector.get_columns('guidance_records')]
+                missing_columns = []
+                
+                # 检查必需的列
+                required_columns = {
+                    'project_id': 'INT',
+                    'record_date': 'DATETIME DEFAULT CURRENT_TIMESTAMP',
+                    'teacher_comment': 'TEXT',
+                    'status': 'INT DEFAULT 0',
+                    'student_name': 'VARCHAR(100)',
+                    'teacher_name': 'VARCHAR(100)'
+                }
+                
+                for col_name, col_def in required_columns.items():
+                    if col_name not in columns:
+                        missing_columns.append((col_name, col_def))
+                
+                if missing_columns:
+                    print(f"检测到指导记录表缺少列，正在添加: {[col[0] for col in missing_columns]}")
+                    for col_name, col_def in missing_columns:
+                        try:
+                            db.session.execute(text(f"ALTER TABLE guidance_records ADD COLUMN {col_name} {col_def}"))
+                            print(f"  ✓ 添加列 {col_name} 成功")
+                        except Exception as e:
+                            print(f"  ✗ 添加列 {col_name} 失败: {e}")
+                    
+                    db.session.commit()
+                    print("指导记录表结构更新完成")
+        except Exception as e:
+            print(f"检查指导记录表结构时出错: {e}")
+            db.session.rollback()
+        
         db.create_all()
         # 初始化测试数据
         init_test_data()

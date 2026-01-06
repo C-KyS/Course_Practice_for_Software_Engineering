@@ -7,6 +7,9 @@ let currentUser = {
 };
 let currentProject = null;
 let allRecords = []; // 保存所有原始记录，用于筛选
+let currentPage = 1; // 当前页码
+const recordsPerPage = 10; // 每页显示的记录数
+let selectedRecordIds = new Set(); // 跨页选中的记录ID集合
 
 document.addEventListener(
     'DOMContentLoaded', function() {
@@ -377,7 +380,7 @@ function renderPaperReviewList(papers) {
 
 // --- 模块5：指导记录管理逻辑 ---
 
-async function loadGuidanceModule() {
+async function loadGuidanceModule(resetPage = true) {
     try {
         // 1. 获取基本信息
         let infoData = {};
@@ -436,16 +439,28 @@ async function loadGuidanceModule() {
                                            {headers : {'X-User-Id' : currentUser.id || 1}});
             if (recordsRes.ok) {
                 const records = await recordsRes.json();
+                // 按ID倒序排列，确保新增记录在最前面
+                records.sort((a, b) => (b.id || 0) - (a.id || 0));
                 allRecords = records; // 保存所有原始记录
+                // 只有在resetPage为true时才重置到第一页
+                if (resetPage) {
+                    currentPage = 1;
+                }
                 renderRecordsTable(records);
             } else {
                 // 如果获取失败，显示空列表
                 allRecords = [];
+                if (resetPage) {
+                    currentPage = 1;
+                }
                 renderRecordsTable([]);
             }
         } catch (e) {
             console.error('获取指导记录失败:', e);
             allRecords = [];
+            if (resetPage) {
+                currentPage = 1;
+            }
             renderRecordsTable([]);
         }
 
@@ -494,24 +509,52 @@ async function loadGuidanceModule() {
 function renderRecordsTable(records) {
     const tbody = document.getElementById('guidance-record-list');
     const countSpan = document.getElementById('record-count');
-    if (!tbody)
-        return;
-
-    // 保存当前记录列表，供修改功能使用
+    if (!tbody) return;
+    
+    // 保存当前记录列表（所有记录），供修改功能使用
     currentRecordsList = records;
+    
+    // 计算总记录数
+    const totalRecords = records.length;
+    if(countSpan) countSpan.textContent = totalRecords;
 
-    tbody.innerHTML = '';
-    if (countSpan)
-        countSpan.textContent = records.length;
-
-    // 计算已通过的记录数（教科办返回“通过”）
-    const submittedCount = records.filter(r => r.teacherComment === '通过').length;
+    // 计算已通过的记录数（教科办返回"通过"）
+    // 只统计当前学生的记录（学生视角）
+    let submittedCount = 0;
+    if (currentUser.role === 'student' && currentProject) {
+        const currentStudentName = currentProject.studentName || '图图';
+        submittedCount = records.filter(r => 
+            r.teacherComment === '通过' && 
+            (r.studentName === currentStudentName || (!r.studentName && currentStudentName === '图图'))
+        ).length;
+    } else {
+        submittedCount = records.filter(r => r.teacherComment === '通过').length;
+    }
     const submittedCountSpan = document.getElementById('submitted-count');
     if (submittedCountSpan) {
         submittedCountSpan.textContent = submittedCount;
     }
 
-    records.forEach(record => {
+    // 分页处理
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    const startIndex = (currentPage - 1) * recordsPerPage;
+    const endIndex = startIndex + recordsPerPage;
+    const paginatedRecords = records.slice(startIndex, endIndex);
+    
+    tbody.innerHTML = '';
+    
+    // 如果记录数超过10条，显示分页控件
+    if (totalRecords > recordsPerPage) {
+        renderPagination(totalPages);
+    } else {
+        // 隐藏分页控件
+        const paginationDiv = document.getElementById('guidance-pagination');
+        if (paginationDiv) {
+            paginationDiv.style.display = 'none';
+        }
+    }
+
+    paginatedRecords.forEach(record => {
         const tr = document.createElement('tr');
 
         // 转义HTML特殊字符，防止XSS
@@ -560,25 +603,84 @@ function renderRecordsTable(records) {
 
         // 学生视角：已提交的记录无法选中
         // 教师视角：已通过审核的记录无法选中
-        const disableCheckbox =
-            (currentUser.role === 'student' && record.status === 1) ||
-            (currentUser.role === 'teacher' && record.teacherComment === '通过');
+        const disableCheckbox = (currentUser.role === 'student' && record.status === 1) || 
+                                (currentUser.role === 'teacher' && record.teacherComment === '通过');
+        
+        // 检查该记录是否在选中集合中
+        const isChecked = selectedRecordIds.has(record.id);
 
-        tr.innerHTML = ` <td><input type = "checkbox" class = "record-checkbox" value =
-                                  "${record.id}" ${disableCheckbox ? 'disabled' : ''} onchange =
-                                      "updateSelectAllState()"></ td>
-                       <td> ${escapeHtml(record.studentName)} < / td >
-                       <td> ${escapeHtml(record.teacherName)} < / td >
-                       <td> ${contentDisplay} ${exportButton} < / td >
-                       <td> ${record.teacherComment ? escapeHtml(record.teacherComment)
-                                                    : '<span style="color:#999">待审查</span>'} <
-                       / td > <td> ${actionButtons} < / td >
+        tr.innerHTML = `
+            <td><input type="checkbox" class="record-checkbox" value="${record.id}" ${disableCheckbox ? 'disabled' : ''} ${isChecked ? 'checked' : ''} onchange="handleRecordCheckboxChange(${record.id}, this.checked)"></td>
+            <td>${escapeHtml(record.studentName)}</td>
+            <td>${escapeHtml(record.teacherName)}</td>
+            <td>
+                ${contentDisplay}
+                ${exportButton}
+            </td>
+            <td>${
+                record.teacherComment === '通过' ? 
+                    '<span style="color:#34C759; font-weight: 500;">通过</span>' : 
+                record.teacherComment === '不通过' ? 
+                    '<span style="color:#FF3B30; font-weight: 500;">不通过</span>' : 
+                record.teacherComment ? 
+                    escapeHtml(record.teacherComment) : 
+                    '<span style="color:#999">待审查</span>'
+            }</td>
+            <td>${actionButtons}</td>
         `;
         tbody.appendChild(tr);
     });
 
     // 更新全选复选框状态
     updateSelectAllState();
+}
+
+// 渲染分页控件
+function renderPagination(totalPages) {
+    let paginationDiv = document.getElementById('guidance-pagination');
+    if (!paginationDiv) {
+        // 创建分页控件容器
+        const tableContainer = document.querySelector('#module5 .card table').parentElement;
+        paginationDiv = document.createElement('div');
+        paginationDiv.id = 'guidance-pagination';
+        paginationDiv.style.cssText = 'margin-top: 20px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px;';
+        tableContainer.appendChild(paginationDiv);
+    }
+    
+    paginationDiv.style.display = 'flex';
+    paginationDiv.innerHTML = '';
+    
+    // 上一页按钮
+    const prevButton = document.createElement('button');
+    prevButton.className = 'btn btn-secondary';
+    prevButton.textContent = '上一页';
+    prevButton.disabled = currentPage === 1;
+    prevButton.onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderRecordsTable(allRecords);
+        }
+    };
+    paginationDiv.appendChild(prevButton);
+    
+    // 页码显示
+    const pageInfo = document.createElement('span');
+    pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+    pageInfo.style.cssText = 'padding: 0 15px; color: var(--color-text-secondary);';
+    paginationDiv.appendChild(pageInfo);
+    
+    // 下一页按钮
+    const nextButton = document.createElement('button');
+    nextButton.className = 'btn btn-secondary';
+    nextButton.textContent = '下一页';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.onclick = () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderRecordsTable(allRecords);
+        }
+    };
+    paginationDiv.appendChild(nextButton);
 }
 
 // 打开新增模态框 (学生)
@@ -693,6 +795,9 @@ function openEditModal(id, currentComment) {
     }
     document.getElementById('modal-submit-btn').textContent = '提交指导记录';
     document.getElementById('guidance-modal').style.display = 'block';
+    
+    // 保存当前页码，以便提交后保持
+    window.currentPageBeforeEdit = currentPage;
 }
 
 function closeModal() {
@@ -716,7 +821,9 @@ async function saveRecord() {
     const method = isEdit ? 'PUT' : 'POST';
 
     const body = {};
-
+    let filePath = null;
+    let originalFileName = null;
+    
     if (isEdit) {
         // 判断是学生修改还是教科办修改
         const teacherSelect = document.getElementById('teacher-comment-select');
@@ -728,22 +835,96 @@ async function saveRecord() {
         } else {
             // 学生修改记录内容
             const fileInput = document.getElementById('record-file');
-            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : null;
-
-            // 如果选择了新文件，更新内容；否则保持原内容不变
-            if (fileName) {
-                body.content = fileName;
+            
+            // 如果选择了新文件，先上传文件
+            if (fileInput.files.length > 0) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', fileInput.files[0]);
+                    
+                    const uploadRes = await fetch('/api/guidance/upload', {
+                        method: 'POST',
+                        headers: { 'X-User-Id': currentUser.id || 1 },
+                        body: formData
+                    });
+                    
+                    if (uploadRes.ok) {
+                        const uploadData = await uploadRes.json();
+                        filePath = uploadData.filePath;
+                        originalFileName = uploadData.originalFilename;
+                    } else {
+                        alert('文件上传失败');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('文件上传失败:', error);
+                    alert('文件上传失败: ' + error.message);
+                    return;
+                }
+            }
+            
+            // 获取学生姓名和教师姓名
+            const studentName = document.getElementById('student-name').value.trim();
+            const teacherName = document.getElementById('teacher-name').value.trim();
+            
+            // 如果上传了新文件，更新文件路径；否则保持原内容不变
+            if (filePath) {
+                body.filePath = filePath;
+                body.content = originalFileName; // 保存原始文件名用于显示
+            }
+            // 更新学生姓名和教师姓名（如果输入了新的）
+            if (studentName) {
+                body.studentName = studentName;
+            }
+            if (teacherName) {
+                body.teacherName = teacherName;
             }
             // 修改时保持原有状态
         }
     } else {
         // 学生新增
         const fileInput = document.getElementById('record-file');
-        const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : '未上传文件';
-
+        
+        // 上传文件
+        if (fileInput.files.length > 0) {
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const uploadRes = await fetch('/api/guidance/upload', {
+                    method: 'POST',
+                    headers: { 'X-User-Id': currentUser.id || 1 },
+                    body: formData
+                });
+                
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    filePath = uploadData.filePath;
+                    originalFileName = uploadData.originalFilename;
+                } else {
+                    alert('文件上传失败');
+                    return;
+                }
+            } catch (error) {
+                console.error('文件上传失败:', error);
+                alert('文件上传失败: ' + error.message);
+                return;
+            }
+        } else {
+            originalFileName = '未上传文件';
+        }
+        
+        // 获取学生姓名和教师姓名
+        const studentName = document.getElementById('student-name').value.trim();
+        const teacherName = document.getElementById('teacher-name').value.trim();
+        
         // 确保有projectId，学生角色时使用默认值1
-        body.projectId = currentProject ? (currentProject.id || 1) : 1;
-        body.content = fileName;
+        body.projectId = currentProject ? (currentProject.id || 1) : 1; 
+        body.filePath = filePath;
+        body.content = originalFileName; // 保存原始文件名用于显示
+        // 如果用户输入了姓名，使用用户输入的；否则使用项目关联的默认值
+        body.studentName = studentName || (currentProject ? (currentProject.studentName || '') : '');
+        body.teacherName = teacherName || (currentProject ? (currentProject.teacherName || '') : '');
         body.status = 0; // 状态0：草稿/已完成但未提交教科办
     }
 
@@ -761,14 +942,29 @@ async function saveRecord() {
             alert(isEdit ? '修改成功' : '记录已保存');
             closeModal();
             // 延迟一下再刷新，确保数据库已提交
-            setTimeout(() =>
-                            {
-                                loadGuidanceModule(); // 刷新列表
-                            },
-                       100);
+            setTimeout(() => {
+                // 如果是新增，重置到第一页（因为新记录在最前面）
+                // 如果是修改，保持当前页码
+                if (isEdit) {
+                    if (window.currentPageBeforeEdit !== undefined) {
+                        currentPage = window.currentPageBeforeEdit;
+                        delete window.currentPageBeforeEdit;
+                    }
+                    loadGuidanceModule(false);
+                } else {
+                    loadGuidanceModule(true);
+                }
+            }, 100);
         } else {
-            const errData = await res.json().catch(() => ({error : '未知错误'}));
-            alert('操作失败: ' + (errData.error || '未知错误'));
+            let errorMessage = '未知错误';
+            try {
+                const errData = await res.json();
+                errorMessage = errData.error || `HTTP ${res.status}: ${res.statusText}`;
+            } catch (e) {
+                errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+            }
+            console.error('保存失败:', errorMessage);
+            alert('操作失败: ' + errorMessage);
         }
     } catch (error) {
         console.error('保存失败:', error);
@@ -790,7 +986,8 @@ async function submitRecordToAdmin(recordId) {
 
         if (res.ok) {
             alert('提交成功');
-            loadGuidanceModule();
+            // 保持当前页码，不重置到第一页
+            loadGuidanceModule(false);
         } else {
             alert('提交失败');
         }
@@ -799,19 +996,38 @@ async function submitRecordToAdmin(recordId) {
     }
 }
 
-// 全选/取消全选
+// 全选/取消全选（跨页全选）
 function toggleSelectAll() {
     const selectAllCheckbox = document.getElementById('selectAllRecords');
     const recordCheckboxes = document.querySelectorAll('.record-checkbox');
-
+    
+    if (selectAllCheckbox.checked) {
+        // 全选：选中所有可选的记录（跨页）
+        allRecords.forEach(record => {
+            // 检查是否可选（未提交的记录）
+            const canSelect = !((currentUser.role === 'student' && record.status === 1) || 
+                               (currentUser.role === 'teacher' && record.teacherComment === '通过'));
+            if (canSelect) {
+                selectedRecordIds.add(record.id);
+            }
+        });
+    } else {
+        // 取消全选：清空所有选中
+        selectedRecordIds.clear();
+    }
+    
+    // 更新当前页的复选框状态
     recordCheckboxes.forEach(checkbox => {
         if (!checkbox.disabled) {
-            checkbox.checked = selectAllCheckbox.checked;
+            checkbox.checked = selectedRecordIds.has(parseInt(checkbox.value));
         }
     });
+    
+    // 更新全选复选框状态
+    updateSelectAllState();
 }
 
-// 更新全选复选框状态
+// 更新全选复选框状态（考虑跨页选择）
 function updateSelectAllState() {
     const selectAllCheckbox = document.getElementById('selectAllRecords');
     const recordCheckboxes =
@@ -822,58 +1038,104 @@ function updateSelectAllState() {
         selectAllCheckbox.indeterminate = false;
         return;
     }
-
-    const checkedCount = recordCheckboxes.filter(cb => cb.checked).length;
-
-    if (checkedCount === 0) {
+    
+    // 计算所有可选的记录数（跨页）
+    const totalSelectableRecords = allRecords.filter(record => {
+        return !((currentUser.role === 'student' && record.status === 1) || 
+                (currentUser.role === 'teacher' && record.teacherComment === '通过'));
+    }).length;
+    
+    // 计算已选中的记录数（跨页）
+    const totalSelectedCount = selectedRecordIds.size;
+    
+    if (totalSelectedCount === 0) {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
-    } else if (checkedCount === recordCheckboxes.length) {
+    } else if (totalSelectedCount === totalSelectableRecords) {
         selectAllCheckbox.checked = true;
         selectAllCheckbox.indeterminate = false;
     } else {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = true;
     }
+    
+    // 同步当前页的复选框状态
+    recordCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectedRecordIds.has(parseInt(checkbox.value));
+    });
+}
+
+// 处理单个记录复选框变化
+function handleRecordCheckboxChange(recordId, isChecked) {
+    if (isChecked) {
+        selectedRecordIds.add(recordId);
+    } else {
+        selectedRecordIds.delete(recordId);
+    }
+    updateSelectAllState();
 }
 
 // 查看/导出记录文件
-function viewRecordFile(fileName, recordId) {
+async function viewRecordFile(fileName, recordId) {
     if (!fileName || fileName === '无内容' || fileName === '未上传文件') {
         alert('该记录没有上传文件');
         return;
     }
-
-    // 创建一个新窗口显示文件信息，实际项目中这里应该下载或预览文件
-    const fileInfo = `文件名 : $ {
-        fileName
-    }
-    \n记录ID : $ {
-        recordId
-    }
-    \n\n注意：这是演示版本，实际项目中这里会显示文件预览或下载文件。`;
-
-    // 可以打开一个新窗口显示文件信息，或者直接下载
-    if (confirm(fileInfo + '\n\n是否要下载该文件？')) {
-        // 实际项目中应该调用后端API下载文件
-        alert('文件下载功能需要后端支持，当前为演示版本');
-        // 示例：window.open(`/api/guidance/records/${recordId}/download`, '_blank');
+    
+    try {
+        const res = await fetch(`/api/guidance/records/${recordId}/download`, {
+            headers: { 'X-User-Id': currentUser.id || 1 }
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            // 从响应头获取文件名，或使用默认名称
+            const contentDisposition = res.headers.get('Content-Disposition');
+            let filename = fileName;
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // 延迟释放URL，确保下载完成
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        } else {
+            let errorMessage = '未知错误';
+            try {
+                const errorData = await res.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+            }
+            alert('下载失败: ' + errorMessage);
+        }
+    } catch (error) {
+        console.error('下载失败:', error);
+        alert('下载失败: ' + error.message);
     }
 }
 
-// 批量删除
+// 批量删除（支持跨页选择）
 async function deleteSelectedRecords() {
-    const checkboxes = document.querySelectorAll('.record-checkbox:checked');
-    if (checkboxes.length === 0) {
+    // 使用全局选中集合，而不是只检查当前页
+    if (selectedRecordIds.size === 0) {
         alert('请先选择要删除的记录');
         return;
     }
-
-    if (!confirm(`确定要删除选中的 ${checkboxes.length} 条记录吗？`))
-        return;
-
-    const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-
+    
+    if (!confirm(`确定要删除选中的 ${selectedRecordIds.size} 条记录吗？`)) return;
+    
+    const ids = Array.from(selectedRecordIds);
+    
     try {
         const res = await fetch('/api/guidance/records', {
             method : 'DELETE',
@@ -883,7 +1145,10 @@ async function deleteSelectedRecords() {
 
         if (res.ok) {
             alert('删除成功');
-            loadGuidanceModule();
+            // 清空选中集合
+            selectedRecordIds.clear();
+            // 保持当前页码
+            loadGuidanceModule(false);
         } else {
             alert('删除失败');
         }
@@ -902,6 +1167,7 @@ function filterRecordsByStudentName() {
 
     if (!searchName) {
         // 如果搜索框为空，显示所有记录
+        currentPage = 1; // 重置到第一页
         renderRecordsTable(allRecords);
         return;
     }
@@ -911,7 +1177,8 @@ function filterRecordsByStudentName() {
         const studentName = record.studentName || '';
         return studentName.includes(searchName);
     });
-
+    
+    currentPage = 1; // 重置到第一页
     renderRecordsTable(filteredRecords);
 }
 
@@ -1669,6 +1936,185 @@ async function deleteTeacherRevision() {
     } catch (error) {
         console.error('删除失败:', error);
         alert('删除失败: ' + error.message);
+    }
+}
+
+// 教师提交修改稿
+async function submitTeacherRevision() {
+    if (!currentTaskInfo.teacherRevisionPath) {
+        alert('请先上传文件');
+        return;
+    }
+    
+    if (!confirm('确认提交任务书修改稿给教务处吗？提交后无法修改。')) return;
+    
+    try {
+        const res = await fetch('/api/task/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-User-Id': currentUser.id || 1
+            },
+            body: JSON.stringify({
+                submitType: 'teacher',
+                projectId: currentTaskInfo.projectId
+            })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            currentTaskInfo = data;
+            currentTaskId = currentTaskInfo.id;
+            // 立即更新显示
+            renderTaskModule();
+            alert('提交成功');
+        } else {
+            const error = await res.json();
+            alert('提交失败: ' + (error.error || '未知错误'));
+        }
+    } catch (error) {
+        console.error('提交失败:', error);
+        alert('提交失败: ' + error.message);
+    }
+}
+
+// 下载文件
+async function downloadTaskFile(fileType) {
+    if (!currentTaskId) {
+        alert('任务书记录不存在');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/task/download/${currentTaskId}?type=${fileType}`, {
+            headers: { 'X-User-Id': currentUser.id || 1 }
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            // 从响应头获取文件名，或使用默认名称
+            const contentDisposition = res.headers.get('Content-Disposition');
+            let filename = 'task_file';
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            } else {
+                // 如果没有Content-Disposition，从currentTaskInfo获取文件名
+                if (currentTaskInfo) {
+                    const filePath = fileType === 'student_draft' ? currentTaskInfo.studentDraftPath : currentTaskInfo.teacherRevisionPath;
+                    if (filePath) {
+                        filename = filePath.split('/').pop().replace(/^[^_]+_/, '');
+                    }
+                }
+            }
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // 延迟释放URL，确保下载完成
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        } else {
+            let errorMessage = '未知错误';
+            try {
+                const errorData = await res.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+            }
+            alert('下载失败: ' + errorMessage);
+        }
+    } catch (error) {
+        console.error('下载失败:', error);
+        alert('下载失败: ' + error.message);
+    }
+}
+
+// 查看文件（预览）
+async function viewTaskFile(fileType) {
+    if (!currentTaskId) {
+        alert('任务书记录不存在');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/task/download/${currentTaskId}?type=${fileType}`, {
+            headers: { 'X-User-Id': currentUser.id || 1 }
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+        } else {
+            const error = await res.json();
+            alert('查看失败: ' + (error.error || '未知错误'));
+        }
+    } catch (error) {
+        console.error('查看失败:', error);
+        alert('查看失败: ' + error.message);
+    }
+}
+
+// 打印文件
+async function printTaskFile(fileType) {
+    if (!currentTaskId) {
+        alert('任务书记录不存在');
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/task/download/${currentTaskId}?type=${fileType}`, {
+            headers: { 'X-User-Id': currentUser.id || 1 }
+        });
+        
+        if (res.ok) {
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            // 从响应头获取文件名，或使用默认名称
+            const contentDisposition = res.headers.get('Content-Disposition');
+            let filename = 'task_file';
+            if (contentDisposition) {
+                const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            } else {
+                // 如果没有Content-Disposition，从currentTaskInfo获取文件名
+                if (currentTaskInfo) {
+                    const filePath = fileType === 'student_draft' ? currentTaskInfo.studentDraftPath : currentTaskInfo.teacherRevisionPath;
+                    if (filePath) {
+                        filename = filePath.split('/').pop().replace(/^[^_]+_/, '');
+                    }
+                }
+            }
+            link.download = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // 延迟释放URL，确保下载完成
+            setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        } else {
+            let errorMessage = '未知错误';
+            try {
+                const errorData = await res.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+            }
+            alert('下载失败: ' + errorMessage);
+        }
+    } catch (error) {
+        console.error('下载失败:', error);
+        alert('下载失败: ' + error.message);
     }
 }
 
