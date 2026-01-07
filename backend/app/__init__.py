@@ -76,6 +76,54 @@ def create_app(config_class=Config):
             print(f"检查指导记录表结构时出错: {e}")
             db.session.rollback()
         
+        # 检查并修复论文表结构
+        try:
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            if 'papers' in inspector.get_table_names():
+                columns = [col['name'] for col in inspector.get_columns('papers')]
+                missing_columns = []
+                
+                # 检查必需的列
+                required_columns = {
+                    'title': 'VARCHAR(128)',
+                    'abstract': 'TEXT',
+                    'upload_time': 'DATETIME',
+                    'review_status': 'VARCHAR(32)',
+                    'review_type': 'VARCHAR(32)',
+                    'reviewer_id': 'INT',
+                    'review_comment': 'TEXT',
+                    'modify_comment': 'TEXT',
+                    'score': 'FLOAT'
+                }
+                
+                for col_name, col_def in required_columns.items():
+                    if col_name not in columns:
+                        missing_columns.append((col_name, col_def))
+                
+                if missing_columns:
+                    print(f"检测到论文表缺少列，正在添加: {[col[0] for col in missing_columns]}")
+                    for col_name, col_def in missing_columns:
+                        try:
+                            # 对于外键列，先添加列，再添加外键约束
+                            if col_name == 'reviewer_id':
+                                db.session.execute(text(f"ALTER TABLE papers ADD COLUMN {col_name} {col_def}"))
+                                try:
+                                    db.session.execute(text(f"ALTER TABLE papers ADD FOREIGN KEY ({col_name}) REFERENCES users(id)"))
+                                except:
+                                    pass  # 外键可能已存在
+                            else:
+                                db.session.execute(text(f"ALTER TABLE papers ADD COLUMN {col_name} {col_def}"))
+                            print(f"  ✓ 添加列 {col_name} 成功")
+                        except Exception as e:
+                            print(f"  ✗ 添加列 {col_name} 失败: {e}")
+                    
+                    db.session.commit()
+                    print("论文表结构更新完成")
+        except Exception as e:
+            print(f"检查论文表结构时出错: {e}")
+            db.session.rollback()
+        
         db.create_all()
         # 初始化测试数据
         init_test_data()

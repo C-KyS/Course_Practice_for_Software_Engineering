@@ -774,6 +774,7 @@
                     <div class="file-info" style="display: none;">
                         <p><strong>已上传:</strong> <span id="paper-filename"></span></p>
                         <p><strong>上传时间:</strong> <span id="paper-upload-time"></span></p>
+                        <button class="button" id="paper-resubmit-btn" onclick="resubmitPaper()" style="margin-top: 10px;">重新提交</button>
                     </div>
                 </div>
                 <div style="margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 20px;">
@@ -807,33 +808,7 @@
                         </tr>
                     </thead>
                     <tbody id="paper-review-list">
-                        <tr>
-                            <td>张三</td>
-                            <td>基于深度学习的图像识别系统</td>
-                            <td data-role="admin">王老师</td>
-                            <td><span class="status-badge status-completed">已提交</span></td>
-                            <td><span class="status-badge status-pending">待评审</span></td>
-                            <td>--</td>
-                            <td><button class="button-link" data-role="teacher" onclick="openPaperReviewModal('张三', '基于深度学习的图像识别系统')">评审</button><button class="button-link" data-role="admin">查看</button></td>
-                        </tr>
-                        <tr>
-                            <td>李四</td>
-                            <td>企业级SaaS平台架构设计</td>
-                            <td data-role="admin">陈老师</td>
-                            <td><span class="status-badge status-completed">已提交</span></td>
-                            <td><span class="status-badge status-completed">已评审</span></td>
-                            <td>88</td>
-                            <td><button class="button-link" data-role="teacher" onclick="openPaperReviewModal('李四', '企业级SaaS平台架构设计')">查看评审</button><button class="button-link" data-role="admin">查看</button></td>
-                        </tr>
-                        <tr>
-                            <td>王五</td>
-                            <td>物联网在智能家居中的应用</td>
-                            <td data-role="admin">王老师</td>
-                            <td><span class="status-badge status-pending">未提交</span></td>
-                            <td><span class="status-badge status-pending">--</span></td>
-                            <td>--</td>
-                            <td><button class="button-link" data-role="teacher" disabled>评审</button><button class="button-link" data-role="admin">查看</button></td>
-                        </tr>
+                        <!-- 动态加载 -->
                     </tbody>
                 </table>
             </div>
@@ -847,7 +822,7 @@
                 <p><strong>学生:</strong> <span id="review-student-name"></span></p>
                 <p><strong>课题:</strong> <span id="review-paper-title"></span></p>
                 <div style="margin-top: 20px;">
-                    <a href="#" class="button-link" download>下载学生论文</a>
+                    <a href="#" id="paper-download-link" class="button-link" download>下载学生论文</a>
                 </div>
                 <form id="paper-review-form" style="margin-top: 15px;">
                     <div class="form-group">

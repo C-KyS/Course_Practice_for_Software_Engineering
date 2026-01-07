@@ -150,6 +150,7 @@ function openPaperReviewModal(studentName, paperTitle, paperId, readOnly = false
     const contentArea = document.getElementById('review-content');
     const scoreInput = document.getElementById('review-score');
     const submitBtn = document.querySelector('#paper-review-form button[type="submit"]');
+    const downloadLink = document.getElementById('paper-download-link');
 
     // Reset fields
     contentArea.value = '加载中...';
@@ -160,6 +161,57 @@ function openPaperReviewModal(studentName, paperTitle, paperId, readOnly = false
     scoreInput.disabled = readOnly;
     if (submitBtn) {
         submitBtn.style.display = readOnly ? 'none' : 'inline-block';
+    }
+
+    // 设置下载链接 - 需要包含用户ID头
+    if (downloadLink) {
+        downloadLink.href = `/api/paper/download/${paperId}`;
+        downloadLink.onclick = async (e) => {
+            e.preventDefault();
+            // 使用fetch下载文件，包含必要的headers
+            try {
+                const res = await fetch(`/api/paper/download/${paperId}`, {
+                    headers: { 'X-User-Id': currentUser.id || 1 }
+                });
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // 从Content-Disposition头获取文件名，或使用默认名称
+                    const contentDisposition = res.headers.get('Content-Disposition');
+                    let filename = 'paper.pdf';
+                    if (contentDisposition) {
+                        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    // 尝试解析错误信息，但如果返回的是HTML（如404页面），则使用状态文本
+                    let errorMessage = '未知错误';
+                    try {
+                        const contentType = res.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const err = await res.json();
+                            errorMessage = err.error || errorMessage;
+                        } else {
+                            errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+                        }
+                    } catch (e) {
+                        errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+                    }
+                    alert('下载失败: ' + errorMessage);
+                }
+            } catch (error) {
+                alert('下载失败: ' + error.message);
+            }
+        };
     }
 
     document.getElementById('paper-review-modal').style.display = 'block';
@@ -223,24 +275,26 @@ async function uploadPaper() {
     if (!fileInput || fileInput.files.length === 0) return;
 
     const file = fileInput.files[0];
-    // Simulate upload by sending metadata
+    
+    // 使用FormData上传文件
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('version', '初稿');
+    formData.append('abstract', '无摘要');
+    
     try {
         const res = await fetch('/api/paper/upload', {
             method: 'POST',
             headers: { 
-                'Content-Type': 'application/json',
                 'X-User-Id': currentUser.id || 1
+                // 不要设置Content-Type，让浏览器自动设置multipart/form-data
             },
-            body: JSON.stringify({
-                title: file.name, // Using filename as title for simulation
-                filePath: file.name,
-                version: '初稿',
-                abstract: '无摘要'
-            })
+            body: formData
         });
 
         if (res.ok) {
             alert('论文上传成功');
+            fileInput.value = ''; // 清空文件选择
             loadPaperModule();
         } else {
             let errorMessage = '未知错误';
@@ -254,6 +308,15 @@ async function uploadPaper() {
         }
     } catch (error) {
         alert('上传失败: ' + error.message);
+    }
+}
+
+async function resubmitPaper() {
+    // 重新提交：触发文件选择
+    const fileInput = document.getElementById('paper-upload-input');
+    if (fileInput) {
+        fileInput.click();
+        // 文件选择后会自动触发uploadPaper
     }
 }
 
@@ -285,19 +348,25 @@ async function loadPaperModule() {
             const fileInfo = document.querySelector('#module7 .file-info');
             const feedbackArea = document.getElementById('paper-feedback');
             const scoreArea = document.getElementById('paper-score');
+            const resubmitBtn = document.getElementById('paper-resubmit-btn');
 
             if (myPaper) {
                 if (uploadArea) uploadArea.style.display = 'none';
                 if (fileInfo) {
                     fileInfo.style.display = 'block';
-                    document.getElementById('paper-filename').textContent = myPaper.filePath || myPaper.title;
+                    // 显示原始文件名，如果没有则使用title
+                    document.getElementById('paper-filename').textContent = myPaper.fileName || myPaper.title;
                     document.getElementById('paper-upload-time').textContent = myPaper.uploadTime;
                 }
+                // 显示重新提交按钮
+                if (resubmitBtn) resubmitBtn.style.display = 'inline-block';
                 if (feedbackArea) feedbackArea.textContent = myPaper.reviewComment || '暂无评审意见。';
                 if (scoreArea) scoreArea.textContent = myPaper.score || '--';
             } else {
                 if (uploadArea) uploadArea.style.display = 'block';
                 if (fileInfo) fileInfo.style.display = 'none';
+                // 隐藏重新提交按钮
+                if (resubmitBtn) resubmitBtn.style.display = 'none';
                 if (feedbackArea) feedbackArea.textContent = '暂无评审意见。';
                 if (scoreArea) scoreArea.textContent = '--';
             }
