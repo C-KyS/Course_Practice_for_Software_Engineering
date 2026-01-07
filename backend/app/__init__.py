@@ -149,8 +149,8 @@ def create_app(config_class=Config):
 
 def init_test_data():
     """初始化一些测试数据，避免数据库为空"""
-    from app.models import User, Project, GuidanceRecord, Paper
-    from datetime import datetime
+    from app.models import User, Project, GuidanceRecord, Paper, TaskDocument
+    from datetime import datetime, timedelta
     
     if User.query.first():
         return
@@ -178,8 +178,96 @@ def init_test_data():
     
     db.session.add_all([p1, p2, p3])
     db.session.commit()
+
+    # 3. 创建任务书数据 (Task Documents)
+    # 场景1：项目1 (图图) - 流程完全结束，教务处已通过
+    td1 = TaskDocument(
+        project_id=p1.id,
+        student_draft_path='uploads/task/task_draft_student1.pdf',
+        student_submitted=1,
+        teacher_revision_path='uploads/task/task_revised_teacher1.pdf',
+        teacher_submitted=1,
+        admin_status='approved',
+        updated_at=datetime.now()
+    )
+
+    # 场景2：项目2 (张三) - 学生已提交，等待教师审核
+    td2 = TaskDocument(
+        project_id=p2.id,
+        student_draft_path='uploads/task/task_draft_student2.pdf',
+        student_submitted=1,
+        teacher_revision_path=None,
+        teacher_submitted=0,
+        admin_status=None,
+        updated_at=datetime.now()
+    )
+
+    # 场景3：项目3 (李四) - 教师已提交，但被教务处退回
+    td3 = TaskDocument(
+        project_id=p3.id,
+        student_draft_path='uploads/task/task_draft_student3.pdf',
+        student_submitted=1,
+        teacher_revision_path='uploads/task/task_revised_teacher3.pdf',
+        teacher_submitted=1,
+        admin_status='returned',
+        updated_at=datetime.now()
+    )
+    db.session.add_all([td1, td2, td3])
+
+    # 4. 创建指导记录数据 (Guidance Records)
+    # 项目1 (图图)
+    gr1 = GuidanceRecord(
+        project_id=p1.id,
+        record_date=datetime(2025, 11, 1, 10, 0, 0),
+        content='讨论毕业设计选题的可行性与初期规划',
+        teacher_comment='通过',
+        student_name='图图',
+        teacher_name='David',
+        status=1
+    )
+    gr2 = GuidanceRecord(
+        project_id=p1.id,
+        record_date=datetime(2025, 12, 15, 14, 30, 0),
+        content='检查系统需求分析文档，提出修改建议',
+        teacher_comment='通过',
+        student_name='图图',
+        teacher_name='David',
+        status=1
+    )
+
+    # 项目2 (张三)
+    gr3 = GuidanceRecord(
+        project_id=p2.id,
+        record_date=datetime(2025, 11, 5, 9, 0, 0),
+        content='确定SaaS平台的总体架构',
+        teacher_comment='通过',
+        student_name='张三',
+        teacher_name='王老师',
+        status=1
+    )
+    gr4 = GuidanceRecord(
+        project_id=p2.id,
+        record_date=datetime(2026, 1, 5, 16, 0, 0),
+        content='中期进度汇报，目前进度之后',
+        teacher_comment='不通过',
+        student_name='张三',
+        teacher_name='王老师',
+        status=1
+    )
+
+    # 项目3 (李四)
+    gr5 = GuidanceRecord(
+        project_id=p3.id,
+        record_date=datetime(2026, 1, 2, 11, 0, 0),
+        content='物联网硬件选型讨论',
+        teacher_comment=None,
+        student_name='李四',
+        teacher_name='David',
+        status=0
+    )
+    db.session.add_all([gr1, gr2, gr3, gr4, gr5])
     
-    # 3. 创建论文数据 (模拟不同状态)
+    # 5. 创建论文数据 (模拟不同状态)
     
     # Case 1: 图图 - 已提交，已评审 (高分)
     paper1 = Paper(
@@ -199,19 +287,33 @@ def init_test_data():
     
     # Case 2: 张三 - 已提交，待评审
     paper2 = Paper(
-        title='企业级SaaS平台架构设计',
-        abstract='本文探讨了微服务架构在SaaS平台中的应用...',
-        file_path='张三_架构设计.docx',
+        title='企业级SaaS平台架构设计与实现',
+        abstract='本文探讨了多租户SaaS平台的数据库设计与性能优化...',
+        file_path='uploads/paper/paper_student2_v1.pdf',
         student_id=s2.id,
         version='初稿',
         review_status='待评审',
-        review_type='一审',
+        review_type=None,
         upload_time=datetime.now()
     )
     
-    # Case 3: 李四 - 未提交 (不创建 Paper 记录)
+    # Case 3: 李四 - 论文已评审，分数较低，需要二审
+    paper3 = Paper(
+        title='基于MQTT的智能家居控制系统',
+        abstract='本系统实现了基于MQTT协议的轻量级智能家居控制...',
+        file_path='uploads/paper/paper_student3_v1.pdf',
+        student_id=s3.id,
+        version='初稿',
+        review_status='已评审',
+        review_type='一审',
+        reviewer_id=t1.id,
+        review_comment='整体架构可以，但硬件测试数据不充分，建议补充实验章节。',
+        modify_comment='需补充第三章实验数据',
+        score=68.5,
+        upload_time=datetime(2025, 12, 20, 9, 0, 0)
+    )
     
-    db.session.add_all([paper1, paper2])
+    db.session.add_all([paper1, paper2, paper3])
     db.session.commit()
 
     print("测试数据初始化完成！")

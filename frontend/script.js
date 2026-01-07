@@ -23,9 +23,9 @@ document.addEventListener(
         if (currentUser.role === 'student')
             currentUser.id = 1;
         if (currentUser.role === 'teacher')
-            currentUser.id = 2;
+            currentUser.id = 4;
         if (currentUser.role === 'admin')
-            currentUser.id = 3;
+            currentUser.id = 6;
 
         // 页面加载时，为当前激活的模块加载数据
         // const activeModule = document.querySelector('.module-content.active');
