@@ -76,10 +76,15 @@ http://127.0.0.1:8080
 │   ├── app/                # 应用核心逻辑
 │   │   ├── api/            # API 接口 (guidance, paper, task)
 │   │   ├── models/         # 数据库模型
+│   │   ├── extensions.py   # Flask 扩展初始化
 │   │   └── __init__.py     # App 工厂函数与路由配置
+│   ├── SQL/                # SQL 脚本 (建表、迁移)
+│   ├── uploads/            # 文件上传存储目录 (按模块分类)
 │   ├── config.py           # 配置文件
 │   ├── run.py              # 启动入口
 │   ├── requirements.txt    # 依赖列表
+│   ├── reset_db.py         # 数据库重置工具
+│   ├── debug_*.py          # 调试辅助脚本
 │   └── instance/           # 数据库文件 (运行后生成)
 ├── frontend/               # 前端代码
 │   ├── index.html          # 主页面
